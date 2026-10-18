@@ -1,0 +1,2075 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>EcoLoop - UpCycle B2B & Maker Platform</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+
+    <!-- Product image zoom viewer -->
+    <div id="product-zoom-modal" class="fixed inset-0 z-[80] hidden items-center justify-center p-3 sm:p-8" role="dialog" aria-modal="true" aria-label="Product image zoom">
+        <button class="absolute inset-0 bg-black/90 backdrop-blur-sm" onclick="closeProductZoom()" aria-label="Close image zoom"></button>
+        <div class="relative z-10 w-full max-w-6xl max-h-[94vh] flex flex-col items-center gap-3">
+            <div class="w-full flex justify-between items-center gap-3"><h3 id="product-zoom-title" class="text-sm sm:text-base font-bold text-white"></h3><button onclick="closeProductZoom()" class="rounded-xl bg-white/10 hover:bg-white/20 text-white px-3 py-2" aria-label="Close"><i class="fa-solid fa-xmark"></i></button></div>
+            <img id="product-zoom-image" src="" alt="Zoomed product" class="max-w-full max-h-[78vh] object-contain rounded-2xl shadow-2xl bg-black/30" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=900&q=85'" />
+            <div id="product-zoom-thumbnails" class="flex gap-2 justify-center flex-wrap"></div>
+        </div>
+    </div>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', '"Prompt"', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0fdf4',
+                            100: '#dcfce7',
+                            200: '#bbf7d0',
+                            300: '#86efac',
+                            400: '#4ade80',
+                            500: '#22c55e',
+                            600: '#16a34a',
+                            700: '#15803d',
+                            800: '#166534',
+                            900: '#14532d',
+                            dark: '#0a1912',
+                            card: '#112219'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Plus Jakarta Sans', 'Prompt', sans-serif;
+            background-color: #060e0a;
+            color: #e2e8f0;
+            background-image: 
+                radial-gradient(circle at 15% 15%, rgba(22, 163, 74, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 85% 85%, rgba(13, 148, 136, 0.12) 0%, transparent 40%),
+                radial-gradient(circle at 50% 50%, rgba(5, 46, 22, 0.2) 0%, transparent 60%);
+            background-attachment: fixed;
+        }
+        .glass-panel {
+            background: rgba(15, 30, 22, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(34, 197, 94, 0.18);
+        }
+        .glass-card {
+            background: rgba(18, 38, 28, 0.6);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .glass-card:hover {
+            border-color: rgba(34, 197, 94, 0.4);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 30px -10px rgba(34, 197, 94, 0.2);
+        }
+        .text-gradient {
+            background: linear-gradient(135deg, #4ade80 0%, #2dd4bf 50%, #a7f3d0 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(10, 25, 18, 0.5);
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(34, 197, 94, 0.3);
+            border-radius: 9999px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(34, 197, 94, 0.6);
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col justify-between custom-scrollbar selection:bg-brand-500 selection:text-black">
+
+    <!-- Top Announcement & Language Bar -->
+    <div class="bg-brand-900/60 border-b border-brand-500/20 text-xs py-2 px-4 text-emerald-200/80">
+        <div class="max-w-7xl mx-auto flex justify-between items-center">
+            <div class="flex items-center gap-3">
+                <span class="bg-brand-500/20 text-brand-300 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border border-brand-500/30" data-lang="announce_badge">B2B Circular Network</span>
+                <span data-lang="announce_text">Over 1,420 Tons of Industrial Waste divert from landfills this month!</span>
+            </div>
+            <div class="flex items-center gap-4">
+                <button onclick="toggleLanguage('en')" id="lang-en-btn" class="font-semibold text-white hover:text-brand-300 transition">EN</button>
+                <span class="text-gray-600">|</span>
+                <button onclick="toggleLanguage('th')" id="lang-th-btn" class="text-gray-400 hover:text-brand-300 transition">TH</button>
+                <span class="text-gray-600">|</span>
+                <span id="top-user-greeting" class="text-emerald-400 font-medium"></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation Header -->
+    <header class="sticky top-0 z-40 glass-panel border-b border-brand-500/20 shadow-xl">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo & Branding -->
+                <div class="flex items-center gap-3 cursor-pointer shrink-0" onclick="switchTab('marketplace')">
+                    <div class="relative w-11 h-11 flex items-center justify-center bg-gradient-to-tr from-brand-600 to-teal-400 rounded-xl shadow-lg shadow-brand-500/20 group">
+                        <!-- Custom SVG Eco-Loop Logo -->
+                        <svg class="w-7 h-7 text-black transform group-hover:rotate-180 transition-transform duration-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                        </svg>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-2xl font-black tracking-tight text-white">Eco<span class="text-gradient">Loop</span></span>
+                            <span class="text-[10px] font-bold bg-teal-500/20 text-teal-300 px-1.5 py-0.5 rounded border border-teal-500/30">v2.5</span>
+                        </div>
+                        <p class="text-[10px] text-emerald-400/70 font-medium tracking-wide uppercase" data-lang="sub_logo">Upcycle B2B & Maker Hub</p>
+                    </div>
+                </div>
+
+                <!-- Desktop Navigation Links -->
+                <nav class="hidden lg:flex flex-1 items-center justify-center gap-0.5 mx-1 min-w-0 text-[11px] xl:text-xs font-medium whitespace-nowrap">
+                    <button onclick="switchTab('marketplace')" class="nav-btn text-brand-300 px-2 xl:px-2.5 py-2 rounded-lg hover:bg-brand-500/10 transition flex items-center gap-1.5 whitespace-nowrap" id="nav-marketplace">
+                        <i class="fa-solid fa-store text-xs"></i> <span data-lang="nav_market">Marketplace</span>
+                    </button>
+                    <button onclick="switchTab('customizer')" class="nav-btn text-gray-300 px-2 xl:px-2.5 py-2 rounded-lg hover:bg-brand-500/10 transition flex items-center gap-1.5 whitespace-nowrap" id="nav-customizer">
+                        <i class="fa-solid fa-wand-magic-sparkles text-xs"></i> <span data-lang="nav_customizer">Maker Tool</span>
+                    </button>
+                    <button onclick="switchTab('waste-exchange')" class="nav-btn text-gray-300 px-2 xl:px-2.5 py-2 rounded-lg hover:bg-brand-500/10 transition flex items-center gap-1.5 whitespace-nowrap" id="nav-waste-exchange">
+                        <i class="fa-solid fa-recycle text-xs"></i> <span data-lang="nav_waste">Industrial Stock</span>
+                        <span class="bg-amber-500/20 text-amber-300 text-[10px] font-bold px-1.5 py-0.5 rounded-full border border-amber-500/30" id="badge-quota-count">5 Live</span>
+                    </button>
+                    <button onclick="switchTab('loyalty')" class="nav-btn text-gray-300 px-2 xl:px-2.5 py-2 rounded-lg hover:bg-brand-500/10 transition flex items-center gap-1.5 whitespace-nowrap" id="nav-loyalty">
+                        <i class="fa-solid fa-award text-xs"></i> <span data-lang="nav_rewards">Loyalty & CO2</span>
+                    </button>
+                    <button onclick="switchTab('orders')" class="nav-btn hidden text-gray-300 px-2 xl:px-2.5 py-2 rounded-lg hover:bg-brand-500/10 transition flex items-center gap-1.5 whitespace-nowrap" id="nav-orders">
+                        <i class="fa-solid fa-receipt text-xs"></i> <span data-lang="nav_orders">My Portal</span>
+                    </button>
+                    <button onclick="openAdminModal()" class="text-purple-300 px-2 xl:px-2.5 py-2 rounded-lg hover:bg-purple-500/10 transition flex items-center gap-1.5 whitespace-nowrap" id="nav-admin">
+                        <i class="fa-solid fa-shield-halved text-xs"></i> <span data-lang="nav_admin">Admin Panel</span>
+                    </button>
+                </nav>
+
+                <!-- User Controls Side -->
+                <div class="flex items-center gap-3 shrink-0">
+                    <!-- Cart Button -->
+                    <button onclick="openCartModal()" class="relative p-2.5 bg-brand-900/50 hover:bg-brand-800/60 border border-brand-500/30 rounded-xl text-brand-300 transition shadow-inner">
+                        <i class="fa-solid fa-cart-shopping text-base"></i>
+                        <span id="cart-badge" class="absolute -top-1.5 -right-1.5 bg-brand-500 text-black text-[11px] font-black w-5 h-5 rounded-full flex items-center justify-center shadow-lg">0</span>
+                    </button>
+
+                    <!-- User Account / Sidebar Toggle -->
+
+                    <div id="user-logged-group" class="hidden items-center gap-2">
+                        <div class="text-right hidden sm:block">
+                            <div class="text-xs font-bold text-emerald-300" id="user-display-name"></div>
+                            <div class="text-[10px] text-gray-400" id="user-display-tier">Gold Innovator</div>
+                        </div>
+                        <button onclick="logoutUser()" class="p-2 text-gray-400 hover:text-red-400 transition" title="Log Out">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Dynamic Content Area -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 w-full">
+
+        <!-- TAB 1: MARKETPLACE & HERO -->
+        <section id="tab-marketplace" class="space-y-12">
+            
+            <!-- Hero Banner: Turning Waste into Something New -->
+            <div class="relative rounded-3xl overflow-hidden border border-brand-500/30 shadow-2xl">
+                <div class="absolute inset-0 bg-cover bg-center" style="background-image: url('https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1600&q=80');"></div>
+                <div class="absolute inset-0 bg-gradient-to-r from-black via-brand-dark/95 to-brand-dark/70"></div>
+                
+                <div class="relative z-10 p-8 sm:p-12 lg:p-16 max-w-3xl">
+                    <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-500/20 border border-brand-500/40 text-brand-300 text-xs font-semibold mb-4">
+                        <i class="fa-solid fa-leaf text-xs"></i> <span data-lang="hero_badge">Zero-Waste Industrial Revolution</span>
+                    </span>
+                    <h1 class="text-3xl sm:text-5xl font-black text-white leading-tight mb-4">
+                        <span data-lang="hero_title1">Turning Waste into</span> <br/>
+                        <span class="text-gradient" data-lang="hero_title2">Something Extraordinary</span>
+                    </h1>
+                    <div class="mb-5">
+                        <button id="hero-get-started-btn" onclick="openAuthDrawer('signup')" class="inline-flex items-center gap-2 px-5 py-2.5 bg-white/10 hover:bg-brand-500/20 text-brand-200 border border-brand-400/40 hover:border-brand-300 font-bold text-sm rounded-xl backdrop-blur-sm transition">
+                            <i class="fa-solid fa-leaf"></i><span data-lang="hero_get_started">Get Started</span><i class="fa-solid fa-arrow-right text-xs"></i>
+                        </button>
+                    </div>
+                    <p class="text-gray-300 text-sm sm:text-base leading-relaxed mb-8" data-lang="hero_desc">
+                        Connect directly with industrial waste generators, artisan creators, and sustainable buyers. Reclaim high-grade wood, metals, textiles, and ocean plastics before they hit landfills.
+                    </p>
+
+                    <div class="flex flex-wrap items-center gap-4">
+                        <button onclick="switchTab('customizer')" class="px-6 py-3 bg-gradient-to-r from-brand-500 to-teal-500 hover:from-brand-400 hover:to-teal-400 text-black font-bold text-sm rounded-xl shadow-lg shadow-brand-500/30 transition transform hover:-translate-y-0.5">
+                            <i class="fa-solid fa-wand-magic-sparkles mr-2"></i><span data-lang="btn_launch_customizer">Launch 3D Configurator</span>
+                        </button>
+                        <button onclick="switchTab('waste-exchange')" class="px-6 py-3 bg-brand-900/80 hover:bg-brand-800/80 text-brand-200 border border-brand-500/40 font-semibold text-sm rounded-xl transition">
+                            <i class="fa-solid fa-boxes-stacked mr-2"></i><span data-lang="btn_claim_industrial">Claim Free Industrial Stock</span>
+                        </button>
+                    </div>
+
+                    <!-- Impact Stats Counter -->
+                    <div class="grid grid-cols-3 gap-4 mt-10 pt-8 border-t border-white/10">
+                        <div>
+                            <div class="text-2xl sm:text-3xl font-black text-white">1,840<span class="text-brand-400">+</span></div>
+                            <div class="text-xs text-gray-400" data-lang="stat_tons">Tons Waste Diverted</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl sm:text-3xl font-black text-white">4,200<span class="text-teal-400">kg</span></div>
+                            <div class="text-xs text-gray-400" data-lang="stat_co2">CO2 Offsets Generated</div>
+                        </div>
+                        <div>
+                            <div class="text-2xl sm:text-3xl font-black text-white">92<span class="text-emerald-400">%</span></div>
+                            <div class="text-xs text-gray-400" data-lang="stat_purity">Industrial Material Purity</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Product Catalog Filter Bar -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 glass-panel p-4 rounded-2xl">
+                <div class="flex items-center gap-2 overflow-x-auto custom-scrollbar pb-2 md:pb-0">
+                    <button onclick="filterCategory('all')" class="cat-filter-btn active bg-brand-500 text-black font-bold px-4 py-2 rounded-xl text-xs transition whitespace-nowrap" data-cat="all" data-lang="cat_all">All Upcycled Gear</button>
+                    <button onclick="filterCategory('furniture')" class="cat-filter-btn text-gray-300 hover:bg-brand-500/20 px-4 py-2 rounded-xl text-xs transition whitespace-nowrap" data-cat="furniture" data-lang="cat_furniture">Furniture & Living</button>
+                    <button onclick="filterCategory('fashion')" class="cat-filter-btn text-gray-300 hover:bg-brand-500/20 px-4 py-2 rounded-xl text-xs transition whitespace-nowrap" data-cat="fashion" data-lang="cat_fashion">Apparel & Bags</button>
+                    <button onclick="filterCategory('lighting')" class="cat-filter-btn text-gray-300 hover:bg-brand-500/20 px-4 py-2 rounded-xl text-xs transition whitespace-nowrap" data-cat="lighting" data-lang="cat_lighting">Decor & Lighting</button>
+                    <button onclick="filterCategory('materials')" class="cat-filter-btn text-gray-300 hover:bg-brand-500/20 px-4 py-2 rounded-xl text-xs transition whitespace-nowrap" data-cat="materials" data-lang="cat_raw">Raw Stock & Composites</button>
+                </div>
+                <div class="relative min-w-[240px]">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-3 text-gray-400 text-xs"></i>
+                    <input type="text" id="product-search-input" onkeyup="searchProducts()" placeholder="Search upcycled products..." class="w-full bg-brand-dark/80 border border-brand-500/30 rounded-xl pl-9 pr-4 py-2 text-xs text-white focus:outline-none focus:border-brand-400" />
+                </div>
+            </div>
+
+            <!-- 12 Product Cards Grid -->
+            <div id="product-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <!-- Injected dynamically via JS -->
+            </div>
+
+            <!-- Featured industrial stock & quotas shortcut -->
+            <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-amber-500/25 bg-gradient-to-r from-amber-950/30 to-brand-dark/70 flex flex-col md:flex-row md:items-center justify-between gap-5">
+                <div class="flex items-start gap-4">
+                    <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-400/25 flex items-center justify-center shrink-0"><i class="fa-solid fa-recycle text-amber-300 text-xl"></i></div>
+                    <div><h2 class="text-xl font-bold text-white">Available Industrial Waste Stock &amp; Quotas</h2><p class="text-sm text-gray-400 mt-1">Browse factory surplus materials, check available quantities, and request a quota for your next upcycling project.</p></div>
+                </div>
+                <button onclick="switchTab('waste-exchange')" class="shrink-0 px-5 py-3 rounded-xl bg-amber-400 hover:bg-amber-300 text-black font-bold text-sm transition">View Industrial Stock <i class="fa-solid fa-arrow-right ml-2"></i></button>
+            </div>
+
+            <!-- Customer Reviews & Success Stories Section -->
+            <div class="glass-panel p-8 rounded-3xl border border-brand-500/20 space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-comments text-brand-400"></i>
+                            <span data-lang="review_title">Community Feedback & Upcycle Stories</span>
+                        </h2>
+                        <p class="text-xs text-gray-400" data-lang="review_subtitle">Real reviews from eco-architects, B2B procurement officers, and green consumers.</p>
+                    </div>
+                    <button id="leave-feedback-btn" onclick="openFeedbackModal()" class="hidden px-4 py-2 bg-brand-500/20 hover:bg-brand-500/30 text-brand-300 border border-brand-500/40 rounded-xl text-xs font-semibold transition">
+                        <i class="fa-solid fa-pen mr-1.5"></i><span data-lang="btn_write_review">Leave Feedback</span>
+                    </button>
+                </div>
+
+                <div id="reviews-container" class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <!-- Dynamic Reviews Populated Here -->
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: MAKER CUSTOMIZER TOOL -->
+        <section id="tab-customizer" class="hidden space-y-8">
+            <div class="glass-panel p-6 rounded-3xl border border-brand-500/20">
+                <div class="max-w-3xl mb-6">
+                    <h2 class="text-2xl font-bold text-white mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-cubes text-teal-400"></i>
+                        <span data-lang="customizer_title">3D Upcycled Customizer & Estimator</span>
+                    </h2>
+                    <p class="text-xs text-gray-400" data-lang="customizer_desc">Design custom furniture and office gear using diverted factory waste. Preview materials, estimated CO2 savings, and live price quote.</p>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <!-- Visual Canvas Preview Simulator -->
+                    <div class="lg:col-span-2 glass-card rounded-2xl p-6 flex flex-col items-center justify-center min-h-[380px] relative overflow-hidden border border-brand-500/20">
+                        <div class="absolute top-4 left-4 bg-brand-900/80 px-3 py-1 rounded-full text-[10px] text-brand-300 border border-brand-500/30">
+                            <i class="fa-solid fa-eye mr-1"></i> Interactive Preview
+                        </div>
+                        
+                        <!-- Simulated Canvas Graphics Render -->
+                        <div id="customizer-preview-box" class="w-full h-64 rounded-xl flex flex-col items-center justify-center transition-all duration-500 relative shadow-2xl" style="background: linear-gradient(135deg, #1e2923, #0d1a13);">
+                            <div id="customizer-item-graphic" class="text-center p-6 transform transition-all duration-500 scale-100">
+                                <i id="customizer-icon" class="fa-solid fa-chair text-7xl text-brand-400 mb-4 drop-shadow-lg"></i>
+                                <h3 id="customizer-preview-title" class="text-xl font-bold text-white">Reclaimed Teak & Metal Desk</h3>
+                                <div class="flex items-center justify-center gap-2 mt-2">
+                                    <span id="customizer-preview-material" class="bg-brand-500/20 text-brand-300 text-xs px-2.5 py-0.5 rounded-full border border-brand-500/30">Material: Teak Offcuts</span>
+                                    <span id="customizer-preview-finish" class="bg-teal-500/20 text-teal-300 text-xs px-2.5 py-0.5 rounded-full border border-teal-500/30">Finish: Matte Eco Wax</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Live Metrics Bar -->
+                        <div class="grid grid-cols-3 w-full mt-6 gap-3 text-center">
+                            <div class="bg-brand-dark/80 p-3 rounded-xl border border-brand-500/20">
+                                <div class="text-[10px] text-gray-400">Weight Saved</div>
+                                <div id="custom-weight-stat" class="text-base font-bold text-brand-300">18.5 kg</div>
+                            </div>
+                            <div class="bg-brand-dark/80 p-3 rounded-xl border border-brand-500/20">
+                                <div class="text-[10px] text-gray-400">Carbon Offset</div>
+                                <div id="custom-co2-stat" class="text-base font-bold text-teal-300">42.0 kg CO2</div>
+                            </div>
+                            <div class="bg-brand-dark/80 p-3 rounded-xl border border-brand-500/20">
+                                <div class="text-[10px] text-gray-400">Maker Points</div>
+                                <div id="custom-points-stat" class="text-base font-bold text-amber-300">+250 PTS</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Configuration Options Controls -->
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-2">Base Item Template</label>
+                            <select id="custom-item-type" onchange="updateCustomizer()" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400">
+                                <option value="desk">Executive Desk (Teak & Steel Frame)</option>
+                                <option value="chair">Ergonomic Lounge Chair (Ocean Plastic & Fabric)</option>
+                                <option value="lamp">Architectural Pendant Lamp (Copper & Glass)</option>
+                                <option value="bench">Outdoor Communal Bench (Recycled HDPE Pallets)</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-2">Primary Diverted Waste Material</label>
+                            <select id="custom-material-type" onchange="updateCustomizer()" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400">
+                                <option value="teak">Factory Teak Wood Offcuts</option>
+                                <option value="hdpe">Recycled HDPE Plastic Pellets</option>
+                                <option value="denim">Post-Industrial Scrap Denim</option>
+                                <option value="firehose">Retired Municipal Firehose</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-2">Accent Frame & Hardware</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <button onclick="setCustomHardware('steel', this)" class="hw-btn active p-2.5 rounded-xl border border-brand-500/50 bg-brand-500/20 text-xs font-medium text-white">Scrap Steel</button>
+                                <button onclick="setCustomHardware('copper', this)" class="hw-btn p-2.5 rounded-xl border border-gray-700 bg-brand-dark text-xs font-medium text-gray-400">Reclaimed Copper</button>
+                            </div>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-semibold text-gray-300 mb-2">Custom Engraving / Branding</label>
+                            <input type="text" id="custom-engrave-text" onkeyup="updateCustomizer()" placeholder="e.g., Company Logo or Serial No." class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                        </div>
+
+                        <div class="pt-4 border-t border-brand-500/20">
+                            <div class="flex justify-between items-center mb-4">
+                                <span class="text-xs text-gray-400">Estimated Custom Price:</span>
+                                <span id="custom-price-display" class="text-2xl font-black text-brand-300">฿380.00</span>
+                            </div>
+                            <button onclick="addCustomToCart()" class="w-full py-3 bg-gradient-to-r from-brand-500 to-teal-400 text-black font-bold text-xs rounded-xl shadow-lg shadow-brand-500/20 hover:opacity-90 transition">
+                                <i class="fa-solid fa-cart-plus mr-2"></i>Add Custom Build to Order
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: INDUSTRIAL WASTE STOCK & QUOTAS -->
+        <section id="tab-waste-exchange" class="hidden space-y-8">
+            <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-brand-500/20">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-8">
+                    <div>
+                        <span class="bg-amber-500/20 text-amber-300 px-2.5 py-1 rounded-full text-xs font-bold border border-amber-500/30">B2B Material Stream</span>
+                        <h2 class="text-2xl sm:text-3xl font-black text-white mt-2" data-lang="waste_title">Available Industrial Waste Stock & Quotas</h2>
+                        <p class="text-xs text-gray-400 max-w-xl mt-1" data-lang="waste_subtitle">Registered makers and certified eco-businesses can claim raw material quotas directly from partner factories for upcycling projects.</p>
+                    </div>
+                    <div class="bg-brand-900/80 px-4 py-2.5 rounded-2xl border border-brand-500/30 text-right">
+                        <div class="text-[10px] text-gray-400">Your Monthly Quota Limit</div>
+                        <div class="text-sm font-bold text-brand-300" id="user-quota-remains">250 kg Remaining</div>
+                    </div>
+                </div>
+
+                <!-- Live Waste Quota Cards Grid -->
+                <div id="waste-stock-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <!-- Populated dynamically via JS -->
+                </div>
+
+                <!-- Customer Claimed Industrial Waste Table View -->
+                <div class="mt-12 pt-8 border-t border-brand-500/20">
+                    <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-boxes-packing text-brand-400"></i>
+                        <span data-lang="claimed_quota_title">Your Claimed Industrial Quotas</span>
+                    </h3>
+                    
+                    <div class="overflow-x-auto rounded-2xl border border-brand-500/20">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-brand-dark/90 text-gray-300 border-b border-brand-500/20 uppercase tracking-wider font-semibold">
+                                <tr>
+                                    <th class="p-3.5">Claim ID</th>
+                                    <th class="p-3.5">Material Waste Stock</th>
+                                    <th class="p-3.5">Supplier Factory</th>
+                                    <th class="p-3.5">Quantity Claimed</th>
+                                    <th class="p-3.5">Points Earned</th>
+                                    <th class="p-3.5">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="claimed-quotas-tbody" class="divide-y divide-brand-500/10 text-gray-300">
+                                <tr>
+                                    <td colspan="6" class="p-6 text-center text-gray-500 italic">No waste stock quotas claimed yet. Click "Claim Material Quota" above!</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: LOYALTY & REWARDS -->
+        <section id="tab-loyalty" class="hidden space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                <!-- Points Overview Card -->
+                <div class="glass-panel p-6 rounded-3xl border border-brand-500/20 space-y-6">
+                    <div class="text-center p-6 bg-gradient-to-b from-brand-900/60 to-brand-dark rounded-2xl border border-brand-500/30">
+                        <div class="text-xs text-brand-400 font-bold uppercase tracking-wider">Eco Power Points Balance</div>
+                        <div class="text-4xl font-black text-white my-2" id="user-points-display">1,250 <span class="text-brand-400 text-lg">PTS</span></div>
+                        <div class="inline-block bg-amber-500/20 text-amber-300 text-xs font-semibold px-3 py-1 rounded-full border border-amber-500/30" id="user-tier-badge">
+                            Gold Innovator Level
+                        </div>
+                    </div>
+
+                    <div class="space-y-3">
+                        <h4 class="text-xs font-bold text-gray-300 uppercase tracking-wider">Membership Perks</h4>
+                        <div class="flex items-center gap-3 text-xs text-gray-300 p-2.5 rounded-xl bg-brand-dark/50">
+                            <i class="fa-solid fa-circle-check text-brand-400"></i>
+                            <span>15% Extra Points on Waste Claims</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs text-gray-300 p-2.5 rounded-xl bg-brand-dark/50">
+                            <i class="fa-solid fa-circle-check text-brand-400"></i>
+                            <span>Free Local Freight on Bulk B2B Orders</span>
+                        </div>
+                        <div class="flex items-center gap-3 text-xs text-gray-300 p-2.5 rounded-xl bg-brand-dark/50">
+                            <i class="fa-solid fa-circle-check text-brand-400"></i>
+                            <span>Priority Access to High-Grade Scrap Copper</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Reward Catalog Grid -->
+                <div class="lg:col-span-2 glass-panel p-6 rounded-3xl border border-brand-500/20">
+                    <h3 class="text-xl font-bold text-white mb-6 flex items-center gap-2">
+                        <i class="fa-solid fa-gift text-amber-400"></i>
+                        <span>Redeem Green Rewards & Vouchers</span>
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div class="glass-card p-4 rounded-2xl flex justify-between items-center">
+                            <div>
+                                <h4 class="text-sm font-bold text-white">฿25 B2B Order Coupon</h4>
+                                <p class="text-xs text-gray-400">500 PTS Required</p>
+                            </div>
+                            <button id="reward-btn-coupon" onclick="redeemReward(500, '฿25 Coupon')" class="px-3.5 py-2 bg-brand-500 hover:bg-brand-400 text-black text-xs font-bold rounded-xl transition">Redeem</button>
+                        </div>
+
+                        <div class="glass-card p-4 rounded-2xl flex justify-between items-center">
+                            <div>
+                                <h4 class="text-sm font-bold text-white">Free Custom Laser Engraving</h4>
+                                <p class="text-xs text-gray-400">300 PTS Required</p>
+                            </div>
+                            <button id="reward-btn-engraving" onclick="redeemReward(300, 'Free Engraving')" class="px-3.5 py-2 bg-brand-500 hover:bg-brand-400 text-black text-xs font-bold rounded-xl transition">Redeem</button>
+                        </div>
+
+                        <div class="glass-card p-4 rounded-2xl flex justify-between items-center">
+                            <div>
+                                <h4 class="text-sm font-bold text-white">Certified CO2 Offset Badge</h4>
+                                <p class="text-xs text-gray-400">800 PTS Required</p>
+                            </div>
+                            <button id="reward-btn-co2" onclick="redeemReward(800, 'CO2 Badge')" class="px-3.5 py-2 bg-brand-500 hover:bg-brand-400 text-black text-xs font-bold rounded-xl transition">Redeem</button>
+                        </div>
+
+                        <div class="glass-card p-4 rounded-2xl flex justify-between items-center">
+                            <div>
+                                <h4 class="text-sm font-bold text-white">VIP Factory Tour Pass</h4>
+                                <p class="text-xs text-gray-400">1200 PTS Required</p>
+                            </div>
+                            <button id="reward-btn-tour" onclick="redeemReward(1200, 'VIP Tour Pass')" class="px-3.5 py-2 bg-brand-500 hover:bg-brand-400 text-black text-xs font-bold rounded-xl transition">Redeem</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 5: CUSTOMER ORDERS & RECEIPTS -->
+        <section id="tab-orders" class="hidden space-y-8">
+            <div class="glass-panel p-6 sm:p-8 rounded-3xl border border-brand-500/20">
+                <div class="flex justify-between items-center mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white" data-lang="orders_title">Your Order History & Digital Receipts</h2>
+                        <p class="text-xs text-gray-400" data-lang="orders_subtitle">View past upcycled product purchases, download receipts, and track eco-points earned.</p>
+                    </div>
+                </div>
+
+                <div class="overflow-x-auto rounded-2xl border border-brand-500/20">
+                    <table class="w-full text-left text-xs">
+                        <thead class="bg-brand-dark/90 text-gray-300 border-b border-brand-500/20 uppercase tracking-wider font-semibold">
+                            <tr>
+                                <th class="p-4">Order ID</th>
+                                <th class="p-4">Date</th>
+                                <th class="p-4">Items Summary</th>
+                                <th class="p-4">Total Amount</th>
+                                <th class="p-4">Payment Method</th>
+                                <th class="p-4">Points Earned / Used</th>
+                                <th class="p-4">Order Progress</th>
+                                <th class="p-4">Receipt</th>
+                                <th class="p-4">Cancel</th>
+                            </tr>
+                        </thead>
+                        <tbody id="customer-orders-tbody" class="divide-y divide-brand-500/10 text-gray-300">
+                            <!-- Populated Dynamically -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-brand-500/20 glass-panel mt-16 py-8 text-xs text-gray-400">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-7 h-7 bg-brand-500 rounded-lg flex items-center justify-center text-black font-black">
+                    <i class="fa-solid fa-leaf text-xs"></i>
+                </div>
+                <span class="text-white font-bold text-sm">EcoLoop Platform © 2026</span>
+            </div>
+            <div class="flex items-center gap-6">
+                <a href="#" class="hover:text-brand-300 transition">Privacy Policy</a>
+                <a href="#" class="hover:text-brand-300 transition">B2B Material Standards</a>
+                <a href="#" class="hover:text-brand-300 transition">Eco Certification</a>
+                <a href="#" class="hover:text-brand-300 transition">Support Hub</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODAL / SIDE-DRAWER 1: AUTH DRAWER (SIGN UP & LOGIN) -->
+    <div id="auth-drawer" class="fixed inset-0 z-50 hidden">
+        <div class="absolute inset-0 bg-black/70 backdrop-blur-sm" onclick="closeAuthDrawer()"></div>
+        
+        <div class="absolute right-0 top-0 bottom-0 w-full max-w-md glass-panel border-l border-brand-500/30 p-6 sm:p-8 overflow-y-auto custom-scrollbar shadow-2xl flex flex-col justify-between">
+            <div>
+                <!-- Close & Header -->
+                <div class="flex items-center justify-between pb-6 border-b border-brand-500/20 mb-6">
+                    <div class="flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-lg bg-brand-500/20 text-brand-300 flex items-center justify-center border border-brand-500/30">
+                            <i class="fa-solid fa-user text-sm"></i>
+                        </div>
+                        <h3 id="auth-drawer-title" class="text-lg font-bold text-white">Sign Up Account</h3>
+                    </div>
+                    <button onclick="closeAuthDrawer()" class="text-gray-400 hover:text-white text-lg">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+
+                <!-- Language option for both Sign Up and Log In -->
+                <div class="flex justify-end items-center gap-2 text-xs mb-3" aria-label="Authentication language">
+                    <span class="text-gray-400" data-lang="auth_language">Language:</span>
+                    <button type="button" onclick="toggleLanguage('en')" class="text-emerald-300 hover:text-white font-semibold">EN</button>
+                    <span class="text-gray-600">|</span>
+                    <button type="button" onclick="toggleLanguage('th')" class="text-emerald-300 hover:text-white font-semibold">ไทย</button>
+                </div>
+
+                <!-- Form Tabs Toggle -->
+                <div class="flex bg-brand-dark rounded-xl p-1 mb-6 border border-brand-500/20">
+                    <button onclick="toggleAuthMode('signup')" id="tab-btn-signup" data-lang="auth_signup_tab" class="flex-1 py-2 text-xs font-bold rounded-lg bg-brand-500 text-black transition">Sign Up</button>
+                    <button onclick="toggleAuthMode('login')" id="tab-btn-login" data-lang="auth_login_tab" class="flex-1 py-2 text-xs font-medium text-gray-400 hover:text-white transition">Log In</button>
+                </div>
+
+                <!-- SIGN UP FORM -->
+                <form id="signup-form" onsubmit="handleSignup(event)" class="space-y-4">
+                    <div>
+                        <label data-lang="auth_username_required" class="block text-[11px] font-semibold text-gray-300 mb-1">Username *</label>
+                        <input type="text" id="su-username" required placeholder="e.g. eco_craftsman" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label data-lang="auth_password_required" class="block text-[11px] font-semibold text-gray-300 mb-1">Password *</label>
+                            <input type="password" id="su-password" required placeholder="••••••••" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                        </div>
+                        <div>
+                            <label data-lang="auth_confirm_password" class="block text-[11px] font-semibold text-gray-300 mb-1">Confirm Password *</label>
+                            <input type="password" id="su-confirm-password" required placeholder="••••••••" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label data-lang="auth_national_id" class="block text-[11px] font-semibold text-gray-300 mb-1">National ID / Business Reg. No. *</label>
+                        <input type="text" id="su-national-id" required placeholder="1-3099-01283-88-2" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label data-lang="auth_fullname" class="block text-[11px] font-semibold text-gray-300 mb-1">Full Name *</label>
+                            <input type="text" id="su-fullname" required placeholder="Jane Doe" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                        </div>
+                        <div>
+                            <label data-lang="auth_phone" class="block text-[11px] font-semibold text-gray-300 mb-1">Phone Number *</label>
+                            <input type="tel" id="su-phone" required placeholder="+66 81 234 5678" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                        </div>
+                    </div>
+
+                    <div>
+                        <label data-lang="auth_email" class="block text-[11px] font-semibold text-gray-300 mb-1">Email Address *</label>
+                        <input type="email" id="su-email" required placeholder="jane@circularartisan.io" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                    </div>
+
+                    <!-- Detailed Address Fields -->
+                    <div class="space-y-2 pt-2 border-t border-brand-500/20">
+                        <label data-lang="auth_address" class="block text-[11px] font-bold text-brand-300 uppercase tracking-wider">Detailed Shipping / Business Address</label>
+                        <input type="text" id="su-street" required placeholder="Street / Building / House No." class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="su-subdistrict" required placeholder="Sub-district / Tambon" class="bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                            <input type="text" id="su-district" required placeholder="District / Amphoe" class="bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                        </div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <input type="text" id="su-province" required placeholder="Province / State" class="bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                            <input type="text" id="su-postcode" required placeholder="Postal Code" class="bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3 pt-2">
+                        <div>
+                            <label data-lang="auth_member_type" class="block text-[11px] font-semibold text-gray-300 mb-1">Member Type</label>
+                            <select id="su-type" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none">
+                                <option value="artisan">Individual Artisan / Maker</option>
+                                <option value="designer">Eco-Architect / Studio</option>
+                                <option value="b2b">B2B Factory Partner</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label data-lang="auth_tier_plan" class="block text-[11px] font-semibold text-gray-300 mb-1">Tier Plan</label>
+                            <select id="su-tier" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none">
+                                <option value="Standard Eco-Member">Standard (Free)</option>
+                                <option value="Gold Innovator">Gold Innovator (฿19/mo)</option>
+                                <option value="VIP Industry Leader">VIP B2B Leader (฿49/mo)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <button type="submit" class="w-full mt-4 py-3 bg-gradient-to-r from-brand-500 to-teal-400 text-black font-bold text-xs rounded-xl shadow-lg shadow-brand-500/20 hover:opacity-90 transition">
+                        <span data-lang="auth_register">Register Account & Claim Bonus Points</span>
+                    </button>
+                </form>
+
+                <!-- LOGIN FORM -->
+                <form id="login-form" onsubmit="handleLogin(event)" class="space-y-4 hidden">
+                    <div>
+                        <label data-lang="auth_login_identity" class="block text-[11px] font-semibold text-gray-300 mb-1">Username or Email</label>
+                        <input type="text" id="li-username" required placeholder="e.g. eco_craftsman" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                    </div>
+                    <div>
+                        <label data-lang="auth_password" class="block text-[11px] font-semibold text-gray-300 mb-1">Password</label>
+                        <input type="password" id="li-password" required placeholder="••••••••" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400" />
+                    </div>
+
+                    <button type="submit" class="w-full py-3 bg-gradient-to-r from-brand-500 to-teal-400 text-black font-bold text-xs rounded-xl shadow-lg shadow-brand-500/20 hover:opacity-90 transition">
+                        <span data-lang="auth_login_submit">Log In to Platform</span>
+                    </button>
+                </form>
+            </div>
+            
+            <div class="mt-8 text-center text-[11px] text-gray-500 border-t border-brand-500/20 pt-4">
+                Encrypted 256-Bit Circular Economy Network Security
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 2: ADMIN LOGIN & PANEL -->
+    <div id="admin-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="closeAdminModal()"></div>
+        
+        <div class="relative w-full max-w-4xl glass-panel rounded-3xl border border-purple-500/30 p-6 sm:p-8 z-10 max-h-[90vh] overflow-y-auto custom-scrollbar">
+            
+            <!-- Admin Lock Header -->
+            <div class="flex justify-between items-center pb-6 border-b border-purple-500/20 mb-6">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-purple-500/20 text-purple-300 flex items-center justify-center border border-purple-500/30">
+                        <i class="fa-solid fa-shield-halved text-lg"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold text-white" data-lang="admin_title">Platform Administrator Hub</h3>
+                        <p class="text-xs text-purple-300/80" data-lang="admin_subtitle">Manage customers, waste stock logs, transactions & feedback moderation.</p>
+                    </div>
+                </div>
+                <button onclick="closeAdminModal()" class="text-gray-400 hover:text-white text-lg">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Admin Authentication Gate -->
+            <div id="admin-auth-gate" class="max-w-md mx-auto my-8 space-y-4 bg-brand-dark/80 p-6 rounded-2xl border border-purple-500/30">
+                <div class="text-center mb-4">
+                    <i class="fa-solid fa-lock text-3xl text-purple-400 mb-2"></i>
+                    <h4 class="text-sm font-bold text-white" data-lang="admin_login_title">Admin Credentials Required</h4>
+                    <p class="text-[11px] text-gray-400 mt-1" data-lang="admin_login_hint">Default Login: Username: admin | Password: admin123</p>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1" data-lang="admin_username">Admin Username</label>
+                    <input type="text" id="admin-user-input" autocomplete="username" placeholder="Admin username" class="w-full bg-black/60 border border-purple-500/30 rounded-xl p-2.5 text-xs text-white" />
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1" data-lang="admin_password">Password</label>
+                    <input type="password" id="admin-pass-input" autocomplete="current-password" placeholder="Admin password" class="w-full bg-black/60 border border-purple-500/30 rounded-xl p-2.5 text-xs text-white" />
+                </div>
+                <button onclick="verifyAdminAuth()" data-lang="admin_authenticate" class="w-full py-2.5 bg-purple-600 hover:bg-purple-500 text-white font-bold text-xs rounded-xl shadow-lg transition">
+                    Authenticate Admin Access
+                </button>
+            </div>
+
+            <!-- Admin Dashboard Content (Unlocked) -->
+            <div id="admin-dashboard-content" class="hidden space-y-8">
+                
+                <!-- Admin Stats Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div class="bg-purple-950/40 border border-purple-500/30 p-4 rounded-2xl">
+                        <div class="text-[10px] text-purple-300" data-lang="admin_stat_users">Registered Users</div>
+                        <div class="text-2xl font-black text-white" id="admin-stat-users">0</div>
+                    </div>
+                    <div class="bg-purple-950/40 border border-purple-500/30 p-4 rounded-2xl">
+                        <div class="text-[10px] text-purple-300" data-lang="admin_stat_orders">Total Orders Placed</div>
+                        <div class="text-2xl font-black text-white" id="admin-stat-orders">0</div>
+                    </div>
+                    <div class="bg-purple-950/40 border border-purple-500/30 p-4 rounded-2xl">
+                        <div class="text-[10px] text-purple-300" data-lang="admin_stat_quotas">Industrial Quotas Claimed</div>
+                        <div class="text-2xl font-black text-white" id="admin-stat-quotas">0</div>
+                    </div>
+                    <div class="bg-purple-950/40 border border-purple-500/30 p-4 rounded-2xl">
+                        <div class="text-[10px] text-purple-300" data-lang="admin_stat_revenue">Total Eco Revenue</div>
+                        <div class="text-2xl font-black text-white" id="admin-stat-revenue">฿0.00</div>
+                    </div>
+                </div>
+
+                <!-- Admin Section Tabs -->
+                <div class="space-y-4">
+                    <h4 class="text-sm font-bold text-purple-300 uppercase tracking-wider" data-lang="admin_customers_title">Registered Customer Database</h4>
+                    <div class="overflow-x-auto rounded-2xl border border-purple-500/20">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-purple-950/80 text-purple-200 border-b border-purple-500/20 uppercase font-semibold">
+                                <tr>
+                                    <th class="p-3" data-lang="admin_user_id">User / ID</th>
+                                    <th class="p-3" data-lang="admin_name_phone">Full Name & Phone</th>
+                                    <th class="p-3" data-lang="admin_national_id">National Reg. ID</th>
+                                    <th class="p-3" data-lang="admin_tier">Member Tier</th>
+                                    <th class="p-3" data-lang="admin_address">Address</th>
+                                    <th class="p-3" data-lang="admin_points">Points</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-users-tbody" class="divide-y divide-purple-500/10 text-gray-300">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h4 class="text-sm font-bold text-purple-300 uppercase tracking-wider" data-lang="admin_transactions_title">All Platform Transactions & Orders</h4>
+                    <div class="overflow-x-auto rounded-2xl border border-purple-500/20">
+                        <table class="w-full text-left text-xs">
+                            <thead class="bg-purple-950/80 text-purple-200 border-b border-purple-500/20 uppercase font-semibold">
+                                <tr>
+                                    <th class="p-3" data-lang="admin_order_id">Order ID</th>
+                                    <th class="p-3" data-lang="admin_customer">Customer</th>
+                                    <th class="p-3" data-lang="admin_items">Items Purchased</th>
+                                    <th class="p-3" data-lang="admin_total">Total (฿)</th>
+                                    <th class="p-3" data-lang="admin_status">Status</th>
+                                    <th class="p-3" data-lang="admin_payment">Payment Type</th>
+                                    <th class="p-3" data-lang="admin_receipt">Receipt</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-orders-tbody" class="divide-y divide-purple-500/10 text-gray-300">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 3: SHOPPING CART & CHECKOUT -->
+    <div id="cart-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="closeCartModal()"></div>
+        <div class="relative w-full max-w-lg max-h-[92vh] overflow-y-auto custom-scrollbar glass-panel rounded-3xl border border-brand-500/30 p-4 sm:p-6 z-10">
+            <div class="flex justify-between items-center pb-4 border-b border-brand-500/20 mb-4">
+                <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-cart-shopping text-brand-400"></i> Upcycle Shopping Cart
+                </h3>
+                <button onclick="closeCartModal()" class="text-gray-400 hover:text-white">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <div id="cart-items-container" class="space-y-3 max-h-[22vh] sm:max-h-60 overflow-y-auto custom-scrollbar my-4">
+                <!-- Cart items list dynamically inserted -->
+            </div>
+
+            <div class="pt-4 border-t border-brand-500/20 space-y-3">
+                <div class="flex justify-between text-xs text-gray-300">
+                    <span>Subtotal</span>
+                    <span id="cart-subtotal" class="font-bold text-white">฿0.00</span>
+                </div>
+                <div class="flex justify-between text-xs text-emerald-400">
+                    <span>Estimated Carbon Offset</span>
+                    <span id="cart-co2-total" class="font-bold">0.0 kg CO2</span>
+                </div>
+                <div class="rounded-xl border border-amber-400/20 bg-amber-400/5 p-3 space-y-2">
+                    <label class="flex items-start gap-2 text-xs text-gray-200 cursor-pointer">
+                        <input id="use-points-checkbox" type="checkbox" class="mt-0.5 accent-amber-400" onchange="updateCartTotals()" />
+                        <span><strong class="text-amber-300">Use earned Eco Points for a discount</strong><br><span id="points-discount-help" class="text-[10px] text-gray-400">100 points = ฿10 off. Maximum discount: 20% of the subtotal.</span></span>
+                    </label>
+                    <div class="flex justify-between text-xs text-gray-300"><span>Points to use</span><span id="cart-points-used" class="font-bold text-amber-300">0 PTS</span></div>
+                    <div class="flex justify-between text-xs text-gray-300"><span>Points discount</span><span id="cart-points-discount" class="font-bold text-emerald-300">-฿0.00</span></div>
+                </div>
+                <div class="flex justify-between text-base font-black text-white pt-2 border-t border-brand-500/10">
+                    <span>Total Amount</span>
+                    <span id="cart-grand-total" class="text-brand-300">฿0.00</span>
+                </div>
+                <div class="space-y-1.5 pt-2">
+                    <label for="payment-method" class="block text-xs font-semibold text-gray-300" data-lang="payment_method_label">Payment Method</label>
+                    <select id="payment-method" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-brand-400">
+                        <option value="PromptPay / Thai QR">PromptPay / Thai QR</option>
+                        <option value="Credit or Debit Card">Credit or Debit Card</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                        <option value="Cash on Delivery">Cash on Delivery</option>
+                    </select>
+                    <div id="payment-details" class="mt-3 space-y-3 rounded-xl border border-brand-500/20 bg-black/20 p-3">
+                        <div id="promptpay-details" class="payment-detail space-y-2">
+                            <p class="text-xs font-bold text-white">PromptPay / Thai QR</p>
+                            <div class="flex flex-col sm:flex-row items-center gap-3">
+                                <img id="promptpay-qr" alt="Demo PromptPay QR code" class="w-28 h-28 rounded-lg bg-white p-1" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAKUAAAClAQAAAAAVUAB3AAABqklEQVR4nN2XMY7bMBBF31gG6I6+AX0Sc9PsOXIQB1biIsda0XuOAHKXkqoiAbR+CrvLlpkiYccp+DnS+5+kiT/HsvmgCP9aFQ1AGOhGjpwFkGa/PZgkrD7nQWquHU92QPsTodT7gWK9+/fN9Z6XvO/Gv7zux9Wy78pssoO7WtTIMW6Jb6aRrN5TTWbG+23JvNf7YTHbejpAkrRGKayckiTJzQGoqAc4j5g0qlRHvyFV0ky8KKyxMR993V32sAPAKimW2o2uDuiKym05LC98H6dN7D0pKbooqEJY6Uat8eJJiWonSRdJtRO5dr5qpxSKWiKrEVx721DS9jZ9sVDCt6lPMC0Ht/+2xSqfd7nu8/R6BV6ia5YMkOYj50egzOabJUNsKQyxEYbY4Bh7zywZYs+cazfOVkkq9ezaGyRyBa2xB5Mrk1ka9TVdRq5TS3oz13tJMbOd3RrLpwo7ovk54Hnn0h7CEHtmOLnmZCWF8qDkBKbmyeRDTS2FUklz9qTkqSa1B/xh8DxNUZEU1ijNucJMdMySLTII18nSz1+b7kdcN9vmRon9xy+q3893FBiB/M4/AAAAAElFTkSuQmCC" />
+                                <div class="text-[10px] text-gray-300 space-y-1"><p class="font-semibold text-amber-300">Demo QR only — not connected to a real bank account.</p><p>For live payments, replace this with your verified PromptPay merchant QR.</p><p>Reference: <span class="font-mono">ECOLOOP-DEMO</span></p></div>
+                            </div>
+                        </div>
+                        <div id="card-details" class="payment-detail hidden space-y-2">
+                            <p class="text-xs font-bold text-white">Credit or Debit Card Details</p>
+                            <label class="block text-[10px] text-gray-300">Cardholder name<input id="cardholder-name" autocomplete="cc-name" class="mt-1 w-full bg-brand-dark border border-brand-500/30 rounded-lg p-2 text-xs text-white" placeholder="Name on card" /></label>
+                            <label class="block text-[10px] text-gray-300">Card number<input id="card-number" autocomplete="cc-number" inputmode="numeric" maxlength="23" class="mt-1 w-full bg-brand-dark border border-brand-500/30 rounded-lg p-2 text-xs text-white" placeholder="1234 5678 9012 3456" /></label>
+                            <div class="grid grid-cols-2 gap-2"><label class="block text-[10px] text-gray-300">Expiry date<input id="card-expiry" autocomplete="cc-exp" maxlength="5" class="mt-1 w-full bg-brand-dark border border-brand-500/30 rounded-lg p-2 text-xs text-white" placeholder="MM/YY" /></label><label class="block text-[10px] text-gray-300">CVV<input id="card-cvv" autocomplete="cc-csc" inputmode="numeric" maxlength="4" type="password" class="mt-1 w-full bg-brand-dark border border-brand-500/30 rounded-lg p-2 text-xs text-white" placeholder="123" /></label></div>
+                            <p class="text-[10px] text-amber-300">Demo form only. Card details are not charged or saved; only the last four digits are attached to the demo order.</p>
+                        </div>
+                        <div id="bank-details" class="payment-detail hidden space-y-1">
+                            <p class="text-xs font-bold text-white">Bank Transfer Details</p>
+                            <div class="rounded-lg bg-brand-dark/80 p-3 text-xs text-gray-200 space-y-1"><p><span class="text-gray-400">Bank:</span> Demo Siam Commercial Bank</p><p><span class="text-gray-400">Account name:</span> EcoLoop Demo Marketplace</p><p><span class="text-gray-400">Account number:</span> 000-0-00000-0</p><p class="text-amber-300 text-[10px] pt-1">Sample details only — do not transfer real money.</p></div>
+                        </div>
+                        <div id="cod-details" class="payment-detail hidden text-xs text-gray-300">Pay when your order is delivered. This is a demo checkout and does not arrange a real delivery.</div>
+                    </div>
+                    <p class="text-[10px] text-gray-500" data-lang="payment_demo_note">Demo checkout: selecting a method records it on the order; no real payment is processed.</p>
+                </div>
+
+                <button onclick="processCheckout()" class="w-full py-3 bg-gradient-to-r from-brand-500 to-teal-400 text-black font-bold text-xs rounded-xl shadow-lg shadow-brand-500/20 hover:opacity-90 transition mt-2">
+                    Checkout & Claim Eco-Points
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: PRINTABLE DIGITAL RECEIPT POPUP -->
+    <div id="receipt-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="closeReceiptModal()"></div>
+        <div class="relative w-full max-w-md bg-white text-gray-900 rounded-3xl p-6 z-10 shadow-2xl font-sans">
+            <div class="text-center border-b pb-4 mb-4">
+                <div class="w-10 h-10 bg-emerald-600 text-white rounded-xl flex items-center justify-center mx-auto mb-2 font-bold">
+                    <i class="fa-solid fa-leaf"></i>
+                </div>
+                <h3 class="text-xl font-black text-gray-900">EcoLoop Circular Receipt</h3>
+                <p class="text-xs text-gray-500" id="receipt-date">Date: Oct 16, 2026</p>
+                <p class="text-xs font-mono font-bold text-emerald-700 mt-1" id="receipt-id">ORDER #ECO-98421</p>
+            </div>
+
+            <div class="space-y-2 text-xs mb-4">
+                <div class="flex justify-between text-gray-600">
+                    <span>Customer Name:</span>
+                    <span class="font-bold text-gray-900" id="receipt-customer-name">—</span>
+                </div>
+                <div class="flex justify-between text-gray-600">
+                    <span>National ID/Reg:</span>
+                    <span class="font-mono text-gray-900" id="receipt-national-id">N/A</span>
+                </div>
+                <div class="flex justify-between text-gray-600 gap-3">
+                    <span>Payment Method:</span>
+                    <span class="font-bold text-gray-900 text-right" id="receipt-payment-method">—</span>
+                </div>
+                <div class="flex justify-between text-gray-600 gap-3">
+                    <span>Customer Email / Phone:</span>
+                    <span class="text-gray-900 text-right" id="receipt-customer-contact">—</span>
+                </div>
+            </div>
+
+            <div class="border-t border-b py-3 my-3">
+                <table class="w-full text-xs">
+                    <thead>
+                        <tr class="text-gray-500 border-b">
+                            <th class="text-left pb-2">Item</th>
+                            <th class="text-center pb-2">Qty</th>
+                            <th class="text-right pb-2">Price</th>
+                        </tr>
+                    </thead>
+                    <tbody id="receipt-items-list" class="divide-y divide-gray-100">
+                        <!-- Items populated JS -->
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="space-y-1.5 text-xs text-right mb-6">
+                <div class="flex justify-between text-gray-600">
+                    <span>Total Paid:</span>
+                    <span class="font-black text-emerald-700 text-base" id="receipt-total-paid">฿0.00</span>
+                </div>
+                <div class="flex justify-between text-emerald-600 font-bold">
+                    <span>Loyalty Points Added:</span>
+                    <span id="receipt-points-earned">+0 PTS</span>
+                </div>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="window.print()" class="flex-1 py-2.5 bg-gray-900 text-white font-bold text-xs rounded-xl hover:bg-black transition">
+                    <i class="fa-solid fa-print mr-1"></i> Print Receipt
+                </button>
+                <button onclick="closeReceiptModal()" class="px-4 py-2.5 bg-gray-200 text-gray-800 font-bold text-xs rounded-xl hover:bg-gray-300 transition">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 5: WRITE FEEDBACK MODAL -->
+    <div id="feedback-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/80 backdrop-blur-md" onclick="closeFeedbackModal()"></div>
+        <div class="relative w-full max-w-md glass-panel rounded-3xl border border-brand-500/30 p-6 z-10">
+            <h3 class="text-lg font-bold text-white mb-4">Submit Upcycle Community Review</h3>
+            <form onsubmit="handleFeedbackSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Rating</label>
+                    <select id="review-rating" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white">
+                        <option value="5">⭐⭐⭐⭐⭐ (5/5 Excellent Quality)</option>
+                        <option value="4">⭐⭐⭐⭐ (4/5 Very Good)</option>
+                        <option value="3">⭐⭐⭐ (3/3 Good)</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-gray-300 mb-1">Your Story & Comments</label>
+                    <textarea id="review-text" required rows="4" placeholder="How did these upcycled materials or products fit your project?" class="w-full bg-brand-dark border border-brand-500/30 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-brand-400"></textarea>
+                </div>
+                <button type="submit" class="w-full py-3 bg-brand-500 hover:bg-brand-400 text-black font-bold text-xs rounded-xl shadow-lg transition">
+                    Post Review to Home Feed
+                </button>
+            </form>
+        </div>
+    </div>
+
+
+    <!-- JAVASCRIPT LOGIC -->
+    <script>
+        // --- GOOGLE SHEETS BRIDGE ---
+        // Paste your deployed Apps Script Web App URL here after deployment.
+        const ECOLOOP_SHEETS_WEB_APP_URL = 'https://script.google.com/macros/s/AKfycbwXy-29LY_Xegyy_K3eH62LepUdwCELXqrX5Z_XPrto0jmQKtxQo27_E2Mf5RHzHMff/exec';
+        async function sendToGoogleSheets(eventType, payload = {}) {
+            if (!ECOLOOP_SHEETS_WEB_APP_URL || ECOLOOP_SHEETS_WEB_APP_URL.includes('PASTE_YOUR')) {
+                console.warn('EcoLoop Google Sheets is not connected yet. Follow SETUP-GUIDE.txt.'); return;
+            }
+            const event = { eventType, timestamp: new Date().toISOString(), payload };
+            try {
+                // no-cors is used because Apps Script Web Apps do not provide browser CORS headers.
+                // The browser cannot read the response, but the POST is sent to Apps Script.
+                await fetch(ECOLOOP_SHEETS_WEB_APP_URL, { method: 'POST', mode: 'no-cors',
+                    headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify(event) });
+            } catch (err) { console.error('Google Sheets sync failed:', err); }
+        }
+        function sheetUserSnapshot(u) {
+            return { username:u.username, fullname:u.fullname, phone:u.phone, email:u.email,
+                nationalId:u.nationalId, address:u.address, type:u.type, tier:u.tier, points:u.points };
+        }
+
+        // --- MULTI-LANGUAGE TRANSLATIONS DICTIONARY ---
+        const i18n = {
+            en: {
+                announce_badge: "B2B Circular Network",
+                announce_text: "Over 1,420 Tons of Industrial Waste divert from landfills this month!",
+                sub_logo: "Upcycle B2B & Maker Hub",
+                nav_market: "Marketplace",
+                nav_customizer: "Maker Tool",
+                nav_waste: "Industrial Stock",
+                nav_rewards: "Loyalty & CO2",
+                nav_orders: "My Portal",
+                nav_admin: "Admin Panel",
+                payment_method_label: "Payment Method",
+                payment_demo_note: "Demo checkout: selecting a method records it on the order; no real payment is processed.",
+                admin_title: "Platform Administrator Hub", admin_subtitle: "Manage customers, waste stock logs, transactions & feedback moderation.",
+                admin_login_title: "Admin Credentials Required", admin_login_hint: "Default Login: Username: admin | Password: admin123", admin_login_hint_password: "Password:",
+                admin_username: "Admin Username", admin_password: "Password", admin_authenticate: "Authenticate Admin Access",
+                admin_stat_users: "Registered Users", admin_stat_orders: "Total Orders Placed", admin_stat_quotas: "Industrial Quotas Claimed", admin_stat_revenue: "Total Eco Revenue",
+                admin_customers_title: "Registered Customer Database", admin_transactions_title: "All Platform Transactions & Orders",
+                admin_user_id: "User / ID", admin_name_phone: "Full Name & Phone", admin_national_id: "National Reg. ID", admin_tier: "Member Tier", admin_address: "Address", admin_points: "Points",
+                admin_order_id: "Order ID", admin_customer: "Customer", admin_items: "Items Purchased", admin_total: "Total (฿)", admin_status: "Status", admin_payment: "Payment Type", admin_receipt: "Receipt", admin_view_receipt: "View receipt", admin_no_orders: "No orders logged in system yet.",
+                payment_method_label: "Payment Method",
+                payment_demo_note: "Demo checkout: selecting a method records it on the order; no real payment is processed.",
+                admin_customers_title: "Registered Customer Database",
+                admin_transactions_title: "All Platform Transactions & Orders",
+                admin_subtitle: "Manage customers, waste stock logs, transactions & feedback moderation.",
+                admin_user_id: "User / ID", admin_name_phone: "Full Name & Phone", admin_national_id: "National Reg. ID", admin_tier: "Member Tier", admin_address: "Address", admin_points: "Points",
+                admin_order_id: "Order ID", admin_customer: "Customer", admin_items: "Items Purchased", admin_total: "Total (฿)", admin_status: "Status", admin_payment: "Payment Type", admin_receipt: "Receipt",
+                auth_language: "Language:",
+                auth_signup_tab: "Sign Up",
+                auth_login_tab: "Log In",
+                auth_username_required: "Username *",
+                auth_password_required: "Password *",
+                auth_confirm_password: "Confirm Password *",
+                auth_national_id: "National ID / Business Reg. No. *",
+                auth_fullname: "Full Name *",
+                auth_phone: "Phone Number *",
+                auth_email: "Email Address *",
+                auth_address: "Detailed Shipping / Business Address",
+                auth_member_type: "Member Type",
+                auth_tier_plan: "Tier Plan",
+                auth_login_identity: "Username or Email",
+                auth_password: "Password",
+                auth_register: "Register Account & Claim Bonus Points",
+                auth_login_submit: "Log In to Platform",
+                btn_login: "Log In",
+                btn_signup: "Sign Up",
+                hero_badge: "Zero-Waste Industrial Revolution",
+                hero_title1: "Turning Waste into",
+                hero_title2: "Something Extraordinary",
+                hero_get_started: "Get Started",
+                hero_desc: "Connect directly with industrial waste generators, artisan creators, and sustainable buyers. Reclaim high-grade wood, metals, textiles, and ocean plastics before they hit landfills.",
+                btn_launch_customizer: "Launch 3D Configurator",
+                btn_claim_industrial: "Claim Free Industrial Stock",
+                stat_tons: "Tons Waste Diverted",
+                stat_co2: "CO2 Offsets Generated",
+                stat_purity: "Industrial Material Purity",
+                cat_all: "All Upcycled Gear",
+                cat_furniture: "Furniture & Living",
+                cat_fashion: "Apparel & Bags",
+                cat_lighting: "Decor & Lighting",
+                cat_raw: "Raw Stock & Composites",
+                review_title: "Community Feedback & Upcycle Stories",
+                review_subtitle: "Real reviews from eco-architects, B2B procurement officers, and green consumers.",
+                btn_write_review: "Leave Feedback",
+                customizer_title: "3D Upcycled Customizer & Estimator",
+                customizer_desc: "Design custom furniture and office gear using diverted factory waste. Preview materials, estimated CO2 savings, and live price quote.",
+                waste_title: "Available Industrial Waste Stock & Quotas",
+                waste_subtitle: "Registered makers and certified eco-businesses can claim raw material quotas directly from partner factories for upcycling projects.",
+                claimed_quota_title: "Your Claimed Industrial Quotas",
+                orders_title: "Your Order History & Digital Receipts",
+                orders_subtitle: "View past upcycled product purchases, download receipts, and track eco-points earned."
+            },
+            th: {
+                announce_badge: "เครือข่าย B2B หมุนเวียน",
+                announce_text: "ลดขยะอุตสาหกรรมฝังกลบได้มากกว่า 1,420 ตันในเดือนนี้!",
+                sub_logo: "แพลตฟอร์มอัปไซเคิลสำหรับผู้ผลิต",
+                nav_market: "ตลาดสินค้า",
+                nav_customizer: "เครื่องมือออกแบบ 3D",
+                nav_waste: "สต็อกขยะอุตสาหกรรม",
+                nav_rewards: "คะแนนสะสม & CO2",
+                nav_orders: "พอร์ทัลของฉัน",
+                nav_admin: "ระบบผู้ดูแล",
+                payment_method_label: "วิธีการชำระเงิน",
+                payment_demo_note: "ระบบสาธิต: วิธีที่เลือกจะถูกบันทึกในคำสั่งซื้อ แต่ไม่มีการชำระเงินจริง",
+                admin_title: "ศูนย์ผู้ดูแลแพลตฟอร์ม", admin_subtitle: "จัดการลูกค้า สต็อกวัสดุเหลือใช้ ธุรกรรม และความคิดเห็น",
+                admin_login_title: "ต้องใช้ข้อมูลผู้ดูแลระบบ", admin_login_hint: "ข้อมูลเข้าสู่ระบบเริ่มต้น: ชื่อผู้ใช้ admin | รหัสผ่าน admin123", admin_login_hint_password: "รหัสผ่าน:",
+                admin_username: "ชื่อผู้ใช้ผู้ดูแล", admin_password: "รหัสผ่าน", admin_authenticate: "ยืนยันสิทธิ์ผู้ดูแล",
+                admin_stat_users: "ผู้ใช้ที่ลงทะเบียน", admin_stat_orders: "คำสั่งซื้อทั้งหมด", admin_stat_quotas: "โควต้าวัสดุที่รับแล้ว", admin_stat_revenue: "รายได้รวมของระบบ",
+                admin_customers_title: "ฐานข้อมูลลูกค้าที่ลงทะเบียน", admin_transactions_title: "ธุรกรรมและคำสั่งซื้อทั้งหมด",
+                admin_user_id: "ผู้ใช้ / รหัส", admin_name_phone: "ชื่อเต็มและโทรศัพท์", admin_national_id: "เลขทะเบียน/บัตร", admin_tier: "ระดับสมาชิก", admin_address: "ที่อยู่", admin_points: "คะแนน",
+                admin_order_id: "รหัสคำสั่งซื้อ", admin_customer: "ลูกค้า", admin_items: "สินค้าที่ซื้อ", admin_total: "ยอดรวม (฿)", admin_status: "สถานะ", admin_payment: "วิธีชำระเงิน", admin_receipt: "ใบเสร็จ", admin_view_receipt: "ดูใบเสร็จ", admin_no_orders: "ยังไม่มีคำสั่งซื้อในระบบ",
+                auth_language: "ภาษา:",
+                auth_signup_tab: "สมัครสมาชิก",
+                auth_login_tab: "เข้าสู่ระบบ",
+                auth_username_required: "ชื่อผู้ใช้ *",
+                auth_password_required: "รหัสผ่าน *",
+                auth_confirm_password: "ยืนยันรหัสผ่าน *",
+                auth_national_id: "เลขประจำตัวประชาชน / เลขทะเบียนธุรกิจ *",
+                auth_fullname: "ชื่อ-นามสกุล *",
+                auth_phone: "หมายเลขโทรศัพท์ *",
+                auth_email: "อีเมล *",
+                auth_address: "ที่อยู่สำหรับจัดส่ง / ที่อยู่ธุรกิจโดยละเอียด",
+                auth_member_type: "ประเภทสมาชิก",
+                auth_tier_plan: "แพ็กเกจสมาชิก",
+                auth_login_identity: "ชื่อผู้ใช้หรืออีเมล",
+                auth_password: "รหัสผ่าน",
+                auth_register: "ลงทะเบียนและรับคะแนนโบนัส",
+                auth_login_submit: "เข้าสู่ระบบแพลตฟอร์ม",
+                btn_login: "เข้าสู่ระบบ",
+                btn_signup: "สมัครสมาชิก",
+                hero_badge: "การปฏิวัติอุตสาหกรรมขยะเป็นศูนย์",
+                hero_title1: "เปลี่ยนขยะเหลือทิ้งให้เป็น",
+                hero_title2: "สิ่งใหม่ที่มีคุณค่ามหาศาล",
+                hero_desc: "เชื่อมต่อระหว่างโรงงานผู้ผลิตขยะอุตสาหกรรม นักออกแบบงานคราฟต์ และผู้ซื้อที่ยั่งยืน นำไม้ เหล็ก ผ้า และพลาสติกทะเลกลับมาใช้ประโยชน์ใหม่",
+                btn_launch_customizer: "เปิดเครื่องมือจำลอง 3D",
+                btn_claim_industrial: "รับโควต้าวัตถุดิบฟรี",
+                stat_tons: "ตัน ขยะที่นำกลับมาใช้",
+                stat_co2: "กก. การลดคาร์บอน",
+                stat_purity: "ความบริสุทธิ์ของวัตถุดิบ",
+                cat_all: "สินค้าอัปไซเคิลทั้งหมด",
+                cat_furniture: "เฟอร์นิเจอร์ & ของแต่งบ้าน",
+                cat_fashion: "แฟชั่น & กระเป๋า",
+                cat_lighting: "โคมไฟ & ของประดับ",
+                cat_raw: "วัตถุดิบ & วัสดุผสม",
+                review_title: "เสียงตอบรับและเรื่องราวความสำเร็จ",
+                review_subtitle: "รีวิวจากสถาปนิกเชิงนิเวศน์ ฝ่ายจัดซื้อ B2B และผู้บริโภครักษ์โลก",
+                btn_write_review: "เขียนรีวิว",
+                customizer_title: "เครื่องมือออกแบบและประเมินราคา 3D",
+                customizer_desc: "ออกแบบเฟอร์นิเจอร์และอุปกรณ์สำนักงานจากวัสดุเหลือทิ้ง พร้อมคำนวณการลด CO2 และใบเสนอราคาแบบเรียลไทม์",
+                waste_title: "สต็อกขยะอุตสาหกรรมและโควต้าที่เปิดให้รับ",
+                waste_subtitle: "ผู้ผลิตและธุรกิจเชิงนิเวศน์ที่ลงทะเบียนสามารถกดรับโควต้าวัตถุดิบตรงจากโรงงานพาร์ทเนอร์",
+                claimed_quota_title: "โควต้าวัตถุดิบที่คุณกดรับแล้ว",
+                orders_title: "ประวัติการสั่งซื้อและใบเสร็จดิจิทัล",
+                orders_subtitle: "เรียกดูคำสั่งซื้อ ดาวน์โหลดใบเสร็จ และตรวจสอบคะแนนสะสมรักษ์โลก"
+            }
+        };
+
+        let currentLang = 'en';
+
+        // All marketplace prices are displayed in Thai Baht (THB).
+        function formatTHB(amount) {
+            return '฿' + Number(amount || 0).toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+
+        // --- GLOBAL APP STATE ---
+        let products = [
+            { id: 1, name: "Reclaimed Teak & Metal Desk", category: "furniture", price: 380, co2: 42.0, points: 250, stock: 8, material: "Teak Offcuts & Scrap Steel", image: "https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=600&q=80" },
+            { id: 2, name: "Ocean Plastic Ergonomic Chair", category: "furniture", price: 210, co2: 28.5, points: 140, stock: 15, material: "Recycled HDPE & Nylon", image: "https://images.unsplash.com/photo-1580481072645-022f9a6d83d0?auto=format&fit=crop&w=600&q=80" },
+            { id: 3, name: "Textile Waste Luxury Tote Bag", category: "fashion", price: 75, co2: 9.2, points: 50, stock: 24, material: "Scrap Denim & Canvas", image: "https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=600&q=80" },
+            { id: 4, name: "Upcycled Denim Lounge Chair", category: "furniture", price: 290, co2: 31.0, points: 190, stock: 6, material: "Factory Scrap Denim Jeans", image: "https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=600&q=80" },
+            { id: 5, name: "Pallet Wood Minimalist Coffee Table", category: "furniture", price: 165, co2: 18.0, points: 110, stock: 11, material: "Oak Shipping Pallets", image: "https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=600&q=80" },
+            { id: 6, name: "Recycled Glass Pendant Lamp", category: "lighting", price: 120, co2: 12.4, points: 80, stock: 18, material: "Post-Consumer Wine Bottles", image: "https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80" },
+            { id: 7, name: "Industrial Rubber Waterproof Backpack", category: "fashion", price: 110, co2: 15.6, points: 75, stock: 19, material: "Reclaimed Truck Inner Tubes", image: "https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=600&q=80" },
+            { id: 8, name: "Copper Pipe Architectural Floor Lamp", category: "lighting", price: 195, co2: 21.0, points: 130, stock: 9, material: "Plumbing Scrap Copper Pipes", image: "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=600&q=80" },
+            { id: 9, name: "Scrap Steel Geometric Wall Clock", category: "lighting", price: 85, co2: 8.5, points: 60, stock: 30, material: "CNC Stamping Offcut Steel", image: "https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?auto=format&fit=crop&w=600&q=80" },
+            { id: 10, name: "Reclaimed Leather Executive Journal", category: "fashion", price: 45, co2: 5.1, points: 30, stock: 45, material: "Automotive Leather Scraps", image: "https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=600&q=80" },
+            { id: 11, name: "Sawdust Composite Planter Trio", category: "materials", price: 55, co2: 7.8, points: 40, stock: 22, material: "Sawdust & Organic Resin", image: "https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=600&q=80" },
+            { id: 12, name: "Upcycled Firehose Messenger Bag", category: "fashion", price: 135, co2: 16.2, points: 95, stock: 14, material: "Retired Decommissioned Firehose", image: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=600&q=80" }
+        ];
+
+        // Product descriptions and multi-photo galleries. Images are illustrative marketplace photos.
+        const productDescriptions = {
+            1: { en: "A sturdy statement desk made from reclaimed teak offcuts and recycled steel. Finished for everyday workspaces, studios, and sustainable hospitality interiors.", th: "โต๊ะทำงานดีไซน์โดดเด่น ผลิตจากเศษไม้สักนำกลับมาใช้ใหม่และเหล็กรีไซเคิล แข็งแรง เหมาะกับสำนักงาน สตูดิโอ และธุรกิจบริการที่ใส่ใจสิ่งแวดล้อม" },
+            2: { en: "A modern ergonomic chair concept made with recycled ocean-bound plastic and durable nylon components. Designed for supportive seating in home offices and creative studios.", th: "เก้าอี้ตามหลักสรีรศาสตร์ดีไซน์ทันสมัย ใช้พลาสติกรีไซเคิลที่เก็บจากพื้นที่ชายฝั่งและชิ้นส่วนไนลอนทนทาน เหมาะกับโฮมออฟฟิศและสตูดิโอสร้างสรรค์" },
+            3: { en: "A practical, limited-run tote assembled from surplus denim and canvas. Each bag features a distinctive textile mix, roomy storage, and reusable everyday utility.", th: "กระเป๋าผ้าโท้ตผลิตจำนวนจำกัดจากผ้ายีนส์และผ้าแคนวาสเหลือใช้ แต่ละใบมีลวดลายผสมผ้าที่ไม่เหมือนกัน จุของได้มากและใช้ซ้ำได้ทุกวัน" },
+            4: { en: "A relaxed lounge chair concept that gives factory-scrap denim a second life. The soft textile finish adds character to reading corners, studios, and casual living spaces.", th: "เก้าอี้พักผ่อนที่นำเศษผ้ายีนส์จากโรงงานกลับมาใช้ใหม่ พื้นผิวผ้านุ่มมีเอกลักษณ์ เหมาะกับมุมอ่านหนังสือ สตูดิโอ และพื้นที่พักผ่อน" },
+            5: { en: "A minimalist coffee table crafted from reclaimed shipping pallets. Its clean profile suits living rooms, cafes, and collaborative spaces while reducing demand for virgin timber.", th: "โต๊ะกาแฟสไตล์มินิมอลจากไม้พาเลตขนส่งที่นำกลับมาใช้ใหม่ รูปทรงเรียบง่าย เหมาะกับห้องนั่งเล่น คาเฟ่ และพื้นที่ทำงานร่วมกัน" },
+            6: { en: "A pendant lamp concept made from recycled glass, bringing a warm ambient glow to dining areas, boutique spaces, and modern interiors.", th: "โคมไฟแขวนแนวคิดจากแก้วรีไซเคิล ให้แสงอบอุ่น เหมาะกับพื้นที่รับประทานอาหาร ร้านบูติก และการตกแต่งภายในสมัยใหม่" },
+            7: { en: "A weather-ready backpack concept that repurposes reclaimed truck inner tubes. The bold, easy-care material is suited to commuting, travel, and everyday carry.", th: "กระเป๋าเป้แนวคิดจากยางในรถบรรทุกที่นำกลับมาใช้ใหม่ วัสดุดูแลรักษาง่าย เหมาะกับการเดินทาง การทำงาน และการใช้งานประจำวัน" },
+            8: { en: "An architectural floor lamp concept combining reclaimed copper pipe with a sculptural industrial silhouette for reading nooks and design-led interiors.", th: "โคมไฟตั้งพื้นดีไซน์สถาปัตยกรรม ผสมท่อทองแดงเหลือใช้กับรูปทรงอุตสาหกรรม เหมาะกับมุมอ่านหนังสือและพื้นที่ตกแต่งอย่างมีสไตล์" },
+            9: { en: "A geometric wall clock concept created from CNC steel offcuts. Its graphic silhouette makes a functional accent for offices, workshops, and contemporary homes.", th: "นาฬิกาติดผนังทรงเรขาคณิตจากเศษเหล็ก CNC เป็นของตกแต่งที่ใช้งานได้จริงสำหรับสำนักงาน เวิร์กช็อป และบ้านสมัยใหม่" },
+            10: { en: "A refined journal cover made from reclaimed automotive leather scraps. Designed for notes, sketches, meeting records, and thoughtful everyday gifting.", th: "ปกสมุดบันทึกเรียบหรูจากเศษหนังรถยนต์ที่นำกลับมาใช้ใหม่ เหมาะสำหรับจดบันทึก วาดภาพ บันทึกการประชุม และเป็นของขวัญ" },
+            11: { en: "A trio of planters made with a sawdust-composite material. A lightweight way to bring greenery into desks, shelves, studios, and small urban spaces.", th: "กระถางต้นไม้ชุดสามใบจากวัสดุผสมขี้เลื่อย น้ำหนักเบา เหมาะสำหรับโต๊ะทำงาน ชั้นวาง สตูดิโอ และพื้นที่เมืองขนาดเล็ก" },
+            12: { en: "A durable messenger bag concept made from retired firehose material. The distinctive surface and sturdy construction make each piece a conversation starter.", th: "กระเป๋าสะพายข้างที่นำสายดับเพลิงปลดระวางกลับมาใช้ใหม่ มีพื้นผิวโดดเด่นและโครงสร้างแข็งแรง แต่ละใบมีเรื่องราวเฉพาะตัว" }
+        };
+        const galleryImages = {
+            1: ["https://images.unsplash.com/photo-1518455027359-f3f8164ba6bd?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1499933374294-4584851497cc?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1497366754035-f200968a6e72?auto=format&fit=crop&w=900&q=85"],
+            2: ["https://images.unsplash.com/photo-1503602642458-232111445657?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1586023492125-27b2c045efd7?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1598300053653-5a1f5b0b0f4a?auto=format&fit=crop&w=900&q=85"],
+            3: ["https://images.unsplash.com/photo-1544816155-12df9643f363?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1523381210434-271e8be1f52b?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1584917865442-de89df76afd3?auto=format&fit=crop&w=900&q=85"],
+            4: ["https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1505693416388-ac5ce068fe85?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1564013799919-ab600027ffc6?auto=format&fit=crop&w=900&q=85"],
+            5: ["https://images.unsplash.com/photo-1533090161767-e6ffed986c88?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1449247709967-d4461a6a6103?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1493663284031-b7e3aefcae8e?auto=format&fit=crop&w=900&q=85"],
+            6: ["https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1543198126-a8ad8e47fb22?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1513506003901-1e6a229e2d15?auto=format&fit=crop&w=900&q=85"],
+            7: ["https://images.unsplash.com/photo-1553062407-98eeb64c6a62?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1622560480654-d96214fdc887?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1548036328-c9fa89d128fa?auto=format&fit=crop&w=900&q=85"],
+            8: ["https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1519710164239-da123dc03ef4?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1507473885765-ef2f4f6f0f8b?auto=format&fit=crop&w=900&q=85"],
+            9: ["https://images.unsplash.com/photo-1563861826100-9cb868fdbe1c?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1507643179773-3e975d7ac515?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1513519245088-0e12902e5a38?auto=format&fit=crop&w=900&q=85"],
+            10: ["https://images.unsplash.com/photo-1544716278-ca5e3f4abd8c?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1517842645767-c639042777db?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1455390582262-044cdea277a8?auto=format&fit=crop&w=900&q=85"],
+            11: ["https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1483794344563-d27a8d18014e?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1416879595882-3373a0480b5b?auto=format&fit=crop&w=900&q=85"],
+            12: ["https://images.unsplash.com/photo-1590874103328-eac38a683ce7?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1581605405669-fcdf81165afa?auto=format&fit=crop&w=900&q=85", "https://images.unsplash.com/photo-1542291026-7eec264c27ff?auto=format&fit=crop&w=900&q=85"],
+        };
+        products.forEach(p => { p.description = productDescriptions[p.id].en; p.gallery = galleryImages[p.id]; p.image = p.gallery[0]; });
+
+        let industrialWasteStock = [
+            { id: "WST-101", name: "Premium Italian Leather Offcuts", supplier: "Luxury Sofa Factory Ltd.", category: "Leather", availableKg: 450, pointsReward: 120, unit: "kg" },
+            { id: "WST-102", name: "Heavy Oak Shipping Pallets (Grade A)", supplier: "Eastern Logistics Hub", category: "Wood", availableKg: 1200, pointsReward: 200, unit: "units" },
+            { id: "WST-103", name: "Scrap Indigo Denim Fabric Spools", supplier: "Bangkok Garment Works", category: "Textiles", availableKg: 320, pointsReward: 90, unit: "kg" },
+            { id: "WST-104", name: "Shredded Ocean HDPE Plastic Flakes", supplier: "Thai Coastal Eco Coop", category: "Plastics", availableKg: 850, pointsReward: 150, unit: "kg" },
+            { id: "WST-105", name: "Bright Scrap Copper Wire & Pipes", supplier: "Metropolitan Electric Supply", category: "Metals", availableKg: 180, pointsReward: 300, unit: "kg" }
+        ];
+
+        let currentUser = null; // Users must sign in; no demo account is auto-loaded.
+        let registeredUsers = (() => { try { return JSON.parse(localStorage.getItem('ecoloop-registered-users') || '[]'); } catch (_) { return []; } })();
+
+        let cart = [];
+        let ordersHistory = (() => { try { return JSON.parse(localStorage.getItem('ecoloop-orders-history') || '[]'); } catch (_) { return []; } })();
+        function persistEcoLoopData() {
+            try {
+                localStorage.setItem('ecoloop-registered-users', JSON.stringify(registeredUsers));
+                localStorage.setItem('ecoloop-orders-history', JSON.stringify(ordersHistory));
+            } catch (_) {}
+        }
+        let selectedCustomHardware = 'steel';
+        let currentCustomPrice = 380;
+        const defaultReviews = [
+            { name: "Srinakarin Studio", text: "The reclaimed teak wood quality exceeded our expectation for our cafe fitout. Fast B2B freight!", rating: 5 },
+            { name: "Marcus Chen", text: "Claimed 50kg of denim scrap. Turned them into limited edition tote bags. Great platform concept!", rating: 5 },
+            { name: "GreenSpace Architects", text: "The ocean plastic chairs look stunning in our sustainable office lobby.", rating: 5 }
+        ];
+        let reviews = (() => { try { return JSON.parse(localStorage.getItem('ecoloop-public-reviews') || 'null') || defaultReviews; } catch (_) { return defaultReviews; } })();
+
+        let pendingReviews = [];
+        let isAdminAuthenticated = false;
+
+        // --- INITIALIZATION ---
+        window.onload = function() {
+            renderProducts(products);
+            renderWasteStock();
+            renderReviews();
+            updateCartBadge();
+            updateRewardButtons();
+            updateCustomizer();
+            
+            // Start signed out. No automatic demo name or guest greeting is shown.
+            updateUserUI();
+            document.getElementById('payment-method')?.addEventListener('change', updatePaymentDetails);
+            updatePaymentDetails();
+        };
+
+        // --- LANGUAGE SWITCHER ---
+        function toggleLanguage(lang) {
+            currentLang = lang;
+            document.getElementById('lang-en-btn').className = lang === 'en' ? 'font-semibold text-white hover:text-brand-300 transition' : 'text-gray-400 hover:text-brand-300 transition';
+            document.getElementById('lang-th-btn').className = lang === 'th' ? 'font-semibold text-white hover:text-brand-300 transition' : 'text-gray-400 hover:text-brand-300 transition';
+
+            document.querySelectorAll('[data-lang]').forEach(el => {
+                const key = el.getAttribute('data-lang');
+                if (i18n[lang] && i18n[lang][key]) {
+                    el.innerText = i18n[lang][key];
+                }
+            });
+            if (typeof products !== 'undefined' && typeof renderProducts === 'function') renderProducts(products);
+            if (typeof updatePaymentDetails === 'function') updatePaymentDetails();
+            if (typeof updateRewardButtons === 'function') updateRewardButtons();
+            const authTitle = document.getElementById('auth-drawer-title');
+            if (authTitle) {
+                const isSignup = !document.getElementById('signup-form').classList.contains('hidden');
+                authTitle.innerText = lang === 'th'
+                    ? (isSignup ? 'สมัครสมาชิก' : 'เข้าสู่ระบบ')
+                    : (isSignup ? 'Sign Up Account' : 'Log In Account');
+            }
+        }
+
+        // --- TAB NAVIGATION ---
+        function switchTab(tabId) {
+            if (tabId === 'orders' && !currentUser) {
+                alert(currentLang === 'th' ? 'กรุณาเข้าสู่ระบบเพื่อดูพอร์ทัลของฉัน' : 'Please sign in to access My Portal.');
+                openAuthDrawer('login');
+                return;
+            }
+            const tabs = ['marketplace', 'customizer', 'waste-exchange', 'loyalty', 'orders'];
+            tabs.forEach(t => {
+                const el = document.getElementById(`tab-${t}`);
+                const navBtn = document.getElementById(`nav-${t}`);
+                if (el) el.classList.add('hidden');
+                if (navBtn) {
+                    navBtn.classList.remove('text-brand-300');
+                    navBtn.classList.add('text-gray-300');
+                }
+            });
+
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            const activeNav = document.getElementById(`nav-${tabId}`);
+            if (activeTab) activeTab.classList.remove('hidden');
+            if (activeNav) {
+                activeNav.classList.remove('text-gray-300');
+                activeNav.classList.add('text-brand-300');
+            }
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // --- PRODUCT RENDER & FILTER ---
+        function renderProducts(items) {
+            const container = document.getElementById('product-grid');
+            container.innerHTML = items.map(p => {
+                const desc = productDescriptions[p.id][currentLang] || p.description;
+                const photos = (p.gallery || [p.image]).map((src, idx) => `<button type="button" onclick="changeProductImage(${p.id}, ${idx})" aria-label="View ${p.name} photo ${idx+1}" class="w-12 h-10 rounded-lg overflow-hidden border ${idx === 0 ? 'border-brand-300' : 'border-white/10'} hover:border-brand-300 focus:outline-none"><img src="${src}" alt="${p.name} photo ${idx+1}" class="w-full h-full object-cover" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=900&q=85'"></button>`).join('');
+                return `
+                <div class="glass-card rounded-3xl overflow-hidden flex flex-col group">
+                    <div class="relative h-56 overflow-hidden bg-black/40">
+                        <button type="button" class="absolute inset-0 w-full h-full text-left" onclick="openProductZoom(${p.id})" aria-label="Zoom ${p.name}"><img id="product-main-image-${p.id}" src="${p.image}" alt="${p.name}" class="w-full h-full object-cover group-hover:scale-[1.02] transition duration-500" loading="lazy" onerror="this.onerror=null;this.src='https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?auto=format&fit=crop&w=900&q=85'" /><span class="absolute bottom-3 left-3 bg-black/70 text-white rounded-lg px-2.5 py-1.5 text-xs"><i class="fa-solid fa-magnifying-glass-plus mr-1"></i>${currentLang === 'th' ? 'ขยายภาพ' : 'Zoom image'}</span></button>
+                        <span class="absolute top-3 right-3 bg-brand-900/90 backdrop-blur-md text-brand-300 border border-brand-500/30 text-[10px] font-bold px-2.5 py-1 rounded-full"><i class="fa-solid fa-leaf text-xs mr-1"></i>-${p.co2}kg CO2</span>
+                    </div>
+                    <div class="px-4 pt-3 flex items-center gap-2" aria-label="Product photo gallery">${photos}<span class="text-[10px] text-gray-500 ml-1">${currentLang === 'th' ? 'รูปสินค้า' : 'More photos'}</span></div>
+                    <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                        <div>
+                            <h3 class="font-bold text-white text-base group-hover:text-brand-300 transition">${p.name}</h3>
+                            <p class="text-xs text-gray-400 mt-2 leading-relaxed">${desc}</p>
+                            <div class="flex flex-wrap gap-1.5 mt-3"><span class="text-[10px] bg-brand-500/10 border border-brand-500/20 text-brand-300 px-2 py-1 rounded-md">${p.material}</span><span class="text-[10px] bg-black/20 text-gray-400 px-2 py-1 rounded-md">${currentLang === 'th' ? 'วัสดุหมุนเวียน' : 'Circular material'}</span></div>
+                            <p class="text-xs text-gray-400 mt-3">${currentLang === 'th' ? 'สินค้าคงเหลือ' : 'Stock'}: <span class="text-emerald-400 font-semibold">${p.stock} ${currentLang === 'th' ? 'ชิ้น' : 'units available'}</span></p>
+                        </div>
+                        <div class="pt-3 border-t border-brand-500/10 flex justify-between items-center gap-2">
+                            <div><div class="text-lg font-black text-white">${formatTHB(p.price)}</div><div class="text-[10px] text-amber-400 font-medium">+${p.points} ${currentLang === 'th' ? 'คะแนนสีเขียว' : 'Green Points'}</div></div>
+                            <button onclick="addToCart(${p.id})" class="px-3.5 py-2 bg-brand-500/20 hover:bg-brand-500 text-brand-300 hover:text-black font-bold text-xs rounded-xl border border-brand-500/40 transition flex items-center gap-1.5"><i class="fa-solid fa-plus text-xs"></i> ${currentLang === 'th' ? 'เพิ่มลงตะกร้า' : 'Add to Cart'}</button>
+                        </div>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function openProductZoom(productId, imageIndex = 0) {
+            const product = products.find(p => p.id === productId);
+            if (!product) return;
+            const modal = document.getElementById('product-zoom-modal');
+            const gallery = product.gallery || [product.image];
+            const idx = Math.max(0, Math.min(imageIndex, gallery.length - 1));
+            document.getElementById('product-zoom-title').innerText = product.name;
+            document.getElementById('product-zoom-image').src = gallery[idx];
+            document.getElementById('product-zoom-image').alt = `${product.name} enlarged photo ${idx + 1}`;
+            document.getElementById('product-zoom-thumbnails').innerHTML = gallery.map((src, i) => `<button onclick="openProductZoom(${productId}, ${i})" class="w-14 h-12 rounded-lg overflow-hidden border ${i === idx ? 'border-brand-300' : 'border-white/20'}"><img src="${src}" alt="${product.name} photo ${i+1}" class="w-full h-full object-cover"></button>`).join('');
+            modal.classList.remove('hidden'); modal.classList.add('flex');
+        }
+        function closeProductZoom() {
+            const modal = document.getElementById('product-zoom-modal');
+            modal.classList.add('hidden'); modal.classList.remove('flex');
+        }
+
+        function changeProductImage(productId, imageIndex) {
+            const product = products.find(p => p.id === productId);
+            const image = document.getElementById(`product-main-image-${productId}`);
+            if (product && image && product.gallery[imageIndex]) image.src = product.gallery[imageIndex];
+        }
+
+        function filterCategory(cat) {
+            document.querySelectorAll('.cat-filter-btn').forEach(b => {
+                b.classList.remove('bg-brand-500', 'text-black', 'font-bold');
+                b.classList.add('text-gray-300');
+            });
+            event.target.classList.add('bg-brand-500', 'text-black', 'font-bold');
+            event.target.classList.remove('text-gray-300');
+
+            if (cat === 'all') {
+                renderProducts(products);
+            } else {
+                renderProducts(products.filter(p => p.category === cat));
+            }
+        }
+
+        function searchProducts() {
+            const query = document.getElementById('product-search-input').value.toLowerCase();
+            const filtered = products.filter(p => p.name.toLowerCase().includes(query) || p.material.toLowerCase().includes(query));
+            renderProducts(filtered);
+        }
+
+        // --- REVIEWS COMMUNITY ---
+        function renderReviews() {
+            const container = document.getElementById('reviews-container');
+            container.innerHTML = reviews.map(r => `
+                <div class="glass-card p-5 rounded-2xl flex flex-col justify-between">
+                    <div>
+                        <div class="text-amber-400 text-xs mb-2">⭐⭐⭐⭐⭐</div>
+                        <p class="text-xs text-gray-300 italic">"${r.text}"</p>
+                    </div>
+                    <div class="mt-4 pt-3 border-t border-brand-500/10 text-xs font-bold text-brand-300">
+                        — ${r.name}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openFeedbackModal() {
+            if (!currentUser) {
+                alert(currentLang === 'th' ? 'กรุณาเข้าสู่ระบบก่อนส่งความคิดเห็น' : 'Please sign in before leaving feedback.');
+                openAuthDrawer('login');
+                return;
+            }
+            document.getElementById('feedback-modal').classList.remove('hidden');
+        }
+        function closeFeedbackModal() {
+            document.getElementById('feedback-modal').classList.add('hidden');
+        }
+        function handleFeedbackSubmit(e) {
+            e.preventDefault();
+            if (!currentUser) {
+                closeFeedbackModal();
+                alert(currentLang === 'th' ? 'กรุณาเข้าสู่ระบบก่อนส่งความคิดเห็น' : 'Please sign in before leaving feedback.');
+                openAuthDrawer('login');
+                return;
+            }
+            const text = document.getElementById('review-text').value.trim();
+            const rating = document.getElementById('review-rating').value;
+            if (!text) return;
+            pendingReviews.push({ name: currentUser.fullname, text, rating: parseInt(rating), submittedBy: currentUser.username });
+            document.getElementById('review-text').value = '';
+            document.getElementById('review-rating').value = '5';
+            closeFeedbackModal();
+            alert(currentLang === 'th' ? 'ขอบคุณ! ความคิดเห็นของคุณจะปรากฏบนหน้าแพลตฟอร์มหลังจากออกจากระบบ' : 'Thank you! Your feedback will appear on the main platform after you log out.');
+        }
+
+        // --- CUSTOMIZER MAKER SIMULATOR ---
+        function updateCustomizer() {
+            const item = document.getElementById('custom-item-type').value;
+            const mat = document.getElementById('custom-material-type').value;
+            const engrave = document.getElementById('custom-engrave-text').value.trim();
+            const iconMap = { desk: 'fa-chair', chair: 'fa-couch', lamp: 'fa-lightbulb', bench: 'fa-box-archive' };
+            const titleMap = { desk: 'Executive Desk', chair: 'Ergonomic Lounge Chair', lamp: 'Architectural Lamp', bench: 'Communal Bench' };
+            const basePrice = { desk: 380, chair: 210, lamp: 120, bench: 260 };
+            const materialAdjust = { teak: 0, hdpe: 35, denim: 20, firehose: 45 };
+            const hardwareAdjust = { steel: 0, copper: 55 };
+            const engravingFee = engrave ? 25 : 0;
+            currentCustomPrice = basePrice[item] + materialAdjust[mat] + hardwareAdjust[selectedCustomHardware] + engravingFee;
+            const materialNames = { teak: 'Factory Teak Wood Offcuts', hdpe: 'Recycled HDPE Plastic Pellets', denim: 'Post-Industrial Scrap Denim', firehose: 'Retired Municipal Firehose' };
+            document.getElementById('customizer-icon').className = `fa-solid ${iconMap[item]} text-7xl text-brand-400 mb-4 drop-shadow-lg`;
+            document.getElementById('customizer-preview-title').innerText = engrave ? `${titleMap[item]} ("${engrave}")` : titleMap[item];
+            document.getElementById('customizer-preview-material').innerText = `Material: ${materialNames[mat]}`;
+            document.getElementById('customizer-preview-finish').innerText = `Hardware: ${selectedCustomHardware === 'copper' ? 'Reclaimed Copper (+฿55)' : 'Scrap Steel'}`;
+            document.getElementById('custom-price-display').innerText = formatTHB(currentCustomPrice);
+            document.getElementById('custom-weight-stat').innerText = ({desk:'18.5 kg',chair:'12.0 kg',lamp:'5.2 kg',bench:'22.0 kg'})[item];
+            document.getElementById('custom-co2-stat').innerText = ({desk:'42.0 kg CO2',chair:'28.5 kg CO2',lamp:'12.4 kg CO2',bench:'31.0 kg CO2'})[item];
+            document.getElementById('custom-points-stat').innerText = `+${Math.round(currentCustomPrice * 0.65)} PTS`;
+        }
+
+        function setCustomHardware(type, btn) {
+            selectedCustomHardware = type;
+            document.querySelectorAll('.hw-btn').forEach(b => {
+                b.className = "hw-btn p-2.5 rounded-xl border border-gray-700 bg-brand-dark text-xs font-medium text-gray-400";
+            });
+            btn.className = "hw-btn active p-2.5 rounded-xl border border-brand-500/50 bg-brand-500/20 text-xs font-medium text-white";
+            updateCustomizer();
+        }
+
+        function addCustomToCart() {
+            const item = document.getElementById('custom-item-type').value;
+            const title = document.getElementById('customizer-preview-title').innerText;
+            
+            const customProduct = {
+                id: Date.now(),
+                name: `Custom Build: ${title}`,
+                price: currentCustomPrice,
+                co2: 35.0,
+                points: Math.round(currentCustomPrice * 0.65),
+                material: `${document.getElementById('custom-material-type').selectedOptions[0].text} + ${selectedCustomHardware === 'copper' ? 'Reclaimed Copper' : 'Scrap Steel'}`
+            };
+
+            sendToGoogleSheets('customizer_quote', { username: currentUser?.username || '', customerName: currentUser?.fullname || '', itemType: item, productName: customProduct.name, material: customProduct.material, hardware: selectedCustomHardware, engraving: document.getElementById('custom-engrave-text').value, estimatedPriceTHB: customProduct.price, pointsEstimate: customProduct.points });
+            cart.push(customProduct);
+            updateCartBadge();
+            alert("Custom Upcycle Build added to shopping cart!");
+        }
+
+        // --- INDUSTRIAL WASTE QUOTAS & CLAIM SYSTEM ---
+        function renderWasteStock() {
+            const container = document.getElementById('waste-stock-grid');
+            container.innerHTML = industrialWasteStock.map(w => `
+                <div class="glass-card p-6 rounded-2xl flex flex-col justify-between border border-amber-500/20">
+                    <div class="space-y-2">
+                        <div class="flex justify-between items-start">
+                            <span class="text-[10px] font-mono bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded border border-amber-500/30">${w.id}</span>
+                            <span class="text-xs font-bold text-brand-300">+${w.pointsReward} PTS Bonus</span>
+                        </div>
+                        <h3 class="text-base font-bold text-white">${w.name}</h3>
+                        <p class="text-xs text-gray-400"><i class="fa-solid fa-industry mr-1"></i>${w.supplier}</p>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-brand-500/10 flex items-center justify-between">
+                        <div>
+                            <div class="text-[10px] text-gray-400">Available Quota</div>
+                            <div class="text-lg font-black text-white">${w.availableKg} <span class="text-xs font-normal text-gray-400">${w.unit}</span></div>
+                        </div>
+                        <button onclick="claimWasteQuota('${w.id}')" class="px-4 py-2 bg-gradient-to-r from-amber-500 to-brand-500 text-black font-bold text-xs rounded-xl shadow-lg transition">
+                            Claim Material
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+
+            renderClaimedQuotasTable();
+        }
+
+        function claimWasteQuota(stockId) {
+            if (!currentUser) {
+                alert("Please Sign Up or Log In first to claim industrial waste material quotas!");
+                openAuthDrawer('login');
+                return;
+            }
+
+            const item = industrialWasteStock.find(w => w.id === stockId);
+            if (item && item.availableKg >= 25) {
+                item.availableKg -= 25;
+                currentUser.points += item.pointsReward;
+                persistEcoLoopData();
+
+                const claimLog = {
+                    claimId: `CLM-${Math.floor(1000 + Math.random() * 9000)}`,
+                    stockName: item.name,
+                    supplier: item.supplier,
+                    qty: `25 ${item.unit}`,
+                    pts: item.pointsReward,
+                    date: new Date().toLocaleDateString()
+                };
+
+                currentUser.claimedQuotas.unshift(claimLog);
+                sendToGoogleSheets('quota_claim', { username: currentUser.username, customerName: currentUser.fullname, email: currentUser.email, ...claimLog });
+                
+                renderWasteStock();
+                updateUserUI();
+                renderAdminData();
+
+                alert(`Quota Claimed Successfully!\n\nYou claimed 25 ${item.unit} of ${item.name}. Earned +${item.pointsReward} Loyalty Points!`);
+            } else {
+                alert("Material quota is depleted for this batch.");
+            }
+        }
+
+        function renderClaimedQuotasTable() {
+            const tbody = document.getElementById('claimed-quotas-tbody');
+            if (!currentUser || currentUser.claimedQuotas.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="6" class="p-6 text-center text-gray-500 italic">No waste stock quotas claimed yet. Click "Claim Material" above!</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = currentUser.claimedQuotas.map(c => `
+                <tr class="hover:bg-brand-500/5">
+                    <td class="p-3.5 font-mono font-bold text-brand-300">${c.claimId}</td>
+                    <td class="p-3.5 font-semibold text-white">${c.stockName}</td>
+                    <td class="p-3.5 text-gray-400">${c.supplier}</td>
+                    <td class="p-3.5 font-bold text-emerald-400">${c.qty}</td>
+                    <td class="p-3.5 font-bold text-amber-300">+${c.pts} PTS</td>
+                    <td class="p-3.5"><span class="bg-brand-500/20 text-brand-300 text-[10px] px-2 py-0.5 rounded-full border border-brand-500/30">Verified Pick Up Ready</span></td>
+                </tr>
+            `).join('');
+        }
+
+        // --- CART & CHECKOUT ---
+        // Loyalty conversion: 100 points = ฿10 (10 points = ฿1); redemption is capped at 20% of subtotal.
+        const POINTS_PER_BAHT = 10;
+        const POINTS_REDEMPTION_CAP = 0.20;
+        function calculateCartRedemption(subtotal) {
+            if (!currentUser || !document.getElementById('use-points-checkbox')?.checked) return { points: 0, discount: 0 };
+            const availablePoints = Math.max(0, Math.floor((currentUser.points || 0) / 100) * 100);
+            const maxBySubtotal = Math.floor((subtotal * POINTS_REDEMPTION_CAP) / 10) * 100;
+            const points = Math.max(0, Math.min(availablePoints, maxBySubtotal));
+            return { points, discount: points / POINTS_PER_BAHT };
+        }
+        function updateCartTotals() {
+            const subtotal = cart.reduce((sum, item) => sum + Number(item.price || 0), 0);
+            const redemption = calculateCartRedemption(subtotal);
+            const discount = Math.min(subtotal, redemption.discount);
+            const total = Math.max(0, subtotal - discount);
+            const used = discount > 0 ? redemption.points : 0;
+            const pointsUsedEl = document.getElementById('cart-points-used');
+            const discountEl = document.getElementById('cart-points-discount');
+            const totalEl = document.getElementById('cart-grand-total');
+            if (pointsUsedEl) pointsUsedEl.textContent = `${used} PTS`;
+            if (discountEl) discountEl.textContent = `-${formatTHB(discount)}`;
+            if (totalEl) totalEl.textContent = formatTHB(total);
+            const help = document.getElementById('points-discount-help');
+            if (help) help.textContent = currentUser ? `Balance: ${currentUser.points || 0} PTS. 100 points = ฿10 off; maximum discount is 20% of subtotal.` : 'Sign in to use earned points. 100 points = ฿10 off; maximum discount is 20% of subtotal.';
+            return { subtotal, pointsUsed: used, discount, total };
+        }
+        function addToCart(productId) {
+            const product = products.find(p => p.id === productId);
+            if (product) {
+                cart.push(product);
+                updateCartBadge();
+                alert(`Added "${product.name}" to shopping cart!`);
+            }
+        }
+
+        function updateCartBadge() {
+            document.getElementById('cart-badge').innerText = cart.length;
+        }
+
+        function openCartModal() {
+            const container = document.getElementById('cart-items-container');
+            if (cart.length === 0) {
+                container.innerHTML = `<p class="text-xs text-gray-400 text-center py-6">Your shopping cart is empty.</p>`;
+                document.getElementById('cart-subtotal').innerText = "฿0.00";
+                document.getElementById('cart-co2-total').innerText = "0.0 kg CO2";
+                document.getElementById('cart-grand-total').innerText = "฿0.00";
+                const pointsBox = document.getElementById('use-points-checkbox'); if (pointsBox) pointsBox.checked = false;
+                updateCartTotals();
+            } else {
+                let subtotal = 0;
+                let co2Total = 0;
+
+                container.innerHTML = cart.map((item, idx) => {
+                    subtotal += item.price;
+                    co2Total += item.co2;
+                    return `
+                        <div class="flex justify-between items-center glass-card p-3 rounded-xl">
+                            <div>
+                                <h4 class="text-xs font-bold text-white">${item.name}</h4>
+                                <p class="text-[10px] text-gray-400">${formatTHB(item.price)} | Carbon Saved: ${item.co2}kg</p>
+                            </div>
+                            <button onclick="removeFromCart(${idx})" class="text-red-400 hover:text-red-300 text-xs">
+                                <i class="fa-solid fa-trash"></i>
+                            </button>
+                        </div>
+                    `;
+                }).join('');
+
+                document.getElementById('cart-subtotal').innerText = formatTHB(subtotal);
+                document.getElementById('cart-co2-total').innerText = `${co2Total.toFixed(1)} kg CO2`;
+                document.getElementById('cart-grand-total').innerText = formatTHB(subtotal);
+                updateCartTotals();
+            }
+
+            document.getElementById('cart-modal').classList.remove('hidden');
+        }
+
+        function removeFromCart(index) {
+            cart.splice(index, 1);
+            updateCartBadge();
+            openCartModal();
+        }
+
+        function closeCartModal() {
+            document.getElementById('cart-modal').classList.add('hidden');
+        }
+
+        function updatePaymentDetails() {
+            const method = document.getElementById('payment-method')?.value || 'PromptPay / Thai QR';
+            const show = { 'PromptPay / Thai QR': 'promptpay-details', 'Credit or Debit Card': 'card-details', 'Bank Transfer': 'bank-details', 'Cash on Delivery': 'cod-details' };
+            document.querySelectorAll('.payment-detail').forEach(el => el.classList.add('hidden'));
+            document.getElementById(show[method] || 'promptpay-details')?.classList.remove('hidden');
+        }
+
+        function processCheckout() {
+            if (cart.length === 0) { alert(currentLang === 'th' ? "ตะกร้าสินค้าว่างเปล่า" : "Your cart is empty!"); return; }
+            if (!currentUser) {
+                alert(currentLang === 'th' ? "กรุณาเข้าสู่ระบบก่อนชำระเงิน" : "Please log in or sign up before checkout.");
+                openAuthDrawer('login');
+                return;
+            }
+            const subtotal = cart.reduce((sum, i) => sum + i.price, 0);
+            const redemption = calculateCartRedemption(subtotal);
+            const pointsUsed = redemption.points;
+            const discountAmount = Math.min(subtotal, redemption.discount);
+            const total = Math.max(0, subtotal - discountAmount);
+            const totalPoints = cart.reduce((sum, i) => sum + (i.points || 50), 0);
+            const orderId = `ECO-${Math.floor(10000 + Math.random() * 90000)}`;
+            const paymentMethod = document.getElementById('payment-method')?.value || 'PromptPay / Thai QR';
+            let paymentDetailsSummary = 'Demo payment details';
+            if (paymentMethod === 'Credit or Debit Card') {
+                const cardName = document.getElementById('cardholder-name').value.trim();
+                const cardNumber = document.getElementById('card-number').value.replace(/\D/g, '');
+                const expiry = document.getElementById('card-expiry').value.trim();
+                const cvv = document.getElementById('card-cvv').value.trim();
+                if (!cardName || cardNumber.length < 12 || !/^\d{2}\/\d{2}$/.test(expiry) || cvv.length < 3) {
+                    alert(currentLang === 'th' ? 'กรุณากรอกรายละเอียดบัตรให้ครบถ้วน' : 'Please complete the cardholder name, card number, expiry (MM/YY), and CVV.');
+                    return;
+                }
+                paymentDetailsSummary = `Card ending in ${cardNumber.slice(-4)} (demo; not charged)`;
+            } else if (paymentMethod === 'Bank Transfer') {
+                paymentDetailsSummary = 'Demo Siam Commercial Bank · EcoLoop Demo Marketplace · 000-0-00000-0 (sample account)';
+            } else if (paymentMethod === 'PromptPay / Thai QR') {
+                paymentDetailsSummary = 'Demo QR reference ECOLOOP-DEMO (not a real PromptPay payment)';
+            } else {
+                paymentDetailsSummary = 'Cash on delivery (demo; no real delivery arranged)';
+            }
+            const newOrder = {
+                orderId, date: new Date().toLocaleString(), items: [...cart], subtotal, discountAmount, pointsUsed, total, pointsEarned: totalPoints,
+                customerName: currentUser.fullname, username: currentUser.username, email: currentUser.email || '', phone: currentUser.phone || '',
+                nationalId: currentUser.nationalId || 'N/A', address: currentUser.address || '', paymentMethod, paymentDetailsSummary, status: 'Pending',
+                receiptItems: [...cart]
+            };
+            ordersHistory.unshift(newOrder);
+            sendToGoogleSheets('order', { ...newOrder, items: newOrder.items.map(i => ({ id:i.id, name:i.name, price:i.price, material:i.material || '' })) });
+            currentUser.points = Math.max(0, (currentUser.points || 0) - pointsUsed + totalPoints);
+            persistEcoLoopData();
+            updateUserUI();
+            reopenReceipt(newOrder);
+            cart = [];
+            ['cardholder-name','card-number','card-expiry','card-cvv'].forEach(id => { const field = document.getElementById(id); if (field) field.value = ''; });
+            const pointsBox = document.getElementById('use-points-checkbox'); if (pointsBox) pointsBox.checked = false;
+            updateCartBadge();
+            closeCartModal();
+            renderCustomerOrdersTable();
+            renderAdminData();
+        }
+
+        function closeReceiptModal() {
+            document.getElementById('receipt-modal').classList.add('hidden');
+        }
+
+        function renderCustomerOrdersTable() {
+            const tbody = document.getElementById('customer-orders-tbody');
+            if (!tbody) return;
+            const visibleOrders = currentUser ? ordersHistory.filter(o => o.username === currentUser.username) : [];
+            if (visibleOrders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="9" class="p-6 text-center text-gray-500 italic">No previous orders found. Place an order in the Marketplace!</td></tr>`;
+                return;
+            }
+            const steps = ['Pending', 'Processing', 'Shipped', 'Delivered'];
+            tbody.innerHTML = visibleOrders.map(o => {
+                const status = o.status || 'Pending';
+                const stepIndex = steps.indexOf(status);
+                const progress = status === 'Cancelled' ? 'Order cancelled' : steps.map((step, idx) => `<span class="inline-flex items-center gap-1 ${idx <= stepIndex ? 'text-emerald-300' : 'text-gray-600'}"><span class="w-2 h-2 rounded-full ${idx <= stepIndex ? 'bg-emerald-400' : 'bg-gray-600'}"></span>${step}</span>`).join('<span class="text-gray-600 px-1">→</span>');
+                const canCancel = ['Pending', 'Processing'].includes(status);
+                return `<tr class="hover:bg-brand-500/5 align-top">
+                    <td class="p-4 font-mono font-bold text-brand-300">${o.orderId}</td>
+                    <td class="p-4 text-gray-400">${o.date}</td>
+                    <td class="p-4 font-semibold text-white">${(o.items || []).map(i => i.name).join(', ')}</td>
+                    <td class="p-4 font-black text-emerald-400">${formatTHB(o.total)}${o.discountAmount ? `<div class="text-[10px] text-amber-300">-${formatTHB(o.discountAmount)} points discount</div>` : ''}</td>
+                    <td class="p-4 text-gray-300">${o.paymentMethod || '—'}</td>
+                    <td class="p-4 font-bold text-amber-300">+${o.pointsEarned || 0} PTS${o.pointsUsed ? `<div class="text-[10px] text-orange-300">-${o.pointsUsed} used</div>` : ''}</td>
+                    <td class="p-4 min-w-[260px]"><div class="text-[10px] mb-2">${progress}</div><span class="text-[10px] text-gray-400">Current status: ${status}</span></td>
+                    <td class="p-4 whitespace-nowrap"><button onclick='reopenReceipt(${JSON.stringify(o).replace(/'/g, '&#39;')})' class="px-3 py-1 bg-brand-500/20 text-brand-300 rounded-lg text-xs hover:bg-brand-500 hover:text-black font-semibold transition"><i class="fa-solid fa-receipt mr-1"></i> Receipt</button></td>
+                    <td class="p-4">${canCancel ? `<button onclick="cancelCustomerOrder('${o.orderId}')" class="px-3 py-1 bg-red-500/15 text-red-300 border border-red-500/30 rounded-lg text-xs hover:bg-red-500/30">Cancel order</button>` : `<span class="text-[10px] text-gray-500">${status === 'Cancelled' ? 'Cancelled' : 'Not cancellable'}</span>`}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        function cancelCustomerOrder(orderId) {
+            if (!currentUser) { alert(currentLang === 'th' ? 'กรุณาเข้าสู่ระบบก่อน' : 'Please sign in first.'); return; }
+            const order = ordersHistory.find(o => o.orderId === orderId && o.username === currentUser.username);
+            if (!order || !['Pending', 'Processing'].includes(order.status || 'Pending')) {
+                alert(currentLang === 'th' ? 'ไม่สามารถยกเลิกคำสั่งซื้อนี้ได้แล้ว' : 'This order can no longer be cancelled.'); return;
+            }
+            const confirmed = confirm(currentLang === 'th' ? `ยืนยันยกเลิกคำสั่งซื้อ ${orderId}?` : `Cancel order ${orderId}?`);
+            if (!confirmed) return;
+            order.status = 'Cancelled';
+            order.cancelledAt = new Date().toLocaleString();
+            // Reverse points awarded and return points redeemed for this order.
+            currentUser.points = Math.max(0, (currentUser.points || 0) - (order.pointsEarned || 0) + (order.pointsUsed || 0));
+            order.pointsReversed = true;
+            persistEcoLoopData();
+            updateUserUI();
+            renderCustomerOrdersTable();
+            renderAdminData();
+            alert(currentLang === 'th' ? 'ยกเลิกคำสั่งซื้อแล้ว และปรับคะแนนสะสมเรียบร้อย' : 'Order cancelled. Earned points were reversed and redeemed points were returned.');
+        }
+
+        function updateOrderStatus(orderId, newStatus) {
+            const order = ordersHistory.find(o => o.orderId === orderId);
+            if (!order || !['Pending','Processing','Shipped','Delivered','Cancelled'].includes(newStatus)) return;
+            if (order.status === 'Cancelled' || order.status === 'Delivered') return;
+            if (newStatus === 'Cancelled' && !order.pointsReversed) {
+                const owner = registeredUsers.find(u => u.username === order.username);
+                if (owner) owner.points = Math.max(0, (owner.points || 0) - (order.pointsEarned || 0) + (order.pointsUsed || 0));
+                order.pointsReversed = true;
+                order.cancelledAt = new Date().toLocaleString();
+            }
+            order.status = newStatus;
+            sendToGoogleSheets('order_status', { orderId: order.orderId, status: newStatus });
+            persistEcoLoopData();
+            if (currentUser && currentUser.username === order.username) updateUserUI();
+            renderCustomerOrdersTable();
+            renderAdminData();
+        }
+
+        function reopenReceipt(order) {
+            document.getElementById('receipt-id').innerText = `ORDER #${order.orderId}`;
+            document.getElementById('receipt-date').innerText = `Date: ${order.date}`;
+            document.getElementById('receipt-customer-name').innerText = order.customerName;
+            document.getElementById('receipt-national-id').innerText = order.nationalId || 'N/A';
+            document.getElementById('receipt-payment-method').innerText = `${order.paymentMethod || 'Not recorded'}${order.paymentDetailsSummary ? ' — ' + order.paymentDetailsSummary : ''}`;
+            const receiptDiscountLine = document.getElementById('receipt-points-earned')?.parentElement?.parentElement;
+            if (receiptDiscountLine && order.pointsUsed) {
+                let discountNote = document.getElementById('receipt-points-discount-note');
+                if (!discountNote) { discountNote = document.createElement('div'); discountNote.id = 'receipt-points-discount-note'; discountNote.className = 'flex justify-between text-xs text-emerald-300 mt-1'; receiptDiscountLine.parentElement.insertBefore(discountNote, receiptDiscountLine); }
+                discountNote.innerHTML = `<span>Points discount (${order.pointsUsed} PTS)</span><span>-${formatTHB(order.discountAmount || 0)}</span>`;
+            } else { document.getElementById('receipt-points-discount-note')?.remove(); }
+            document.getElementById('receipt-customer-contact').innerText = [order.email, order.phone].filter(Boolean).join(' / ') || '—';
+            document.getElementById('receipt-total-paid').innerText = formatTHB(order.total);
+            document.getElementById('receipt-points-earned').innerText = `+${order.pointsEarned} PTS`;
+
+            document.getElementById('receipt-items-list').innerHTML = order.items.map(i => `
+                <tr class="py-1">
+                    <td class="py-1 font-semibold text-gray-800">${i.name}</td>
+                    <td class="text-center py-1">1</td>
+                    <td class="text-right py-1 font-mono">${formatTHB(i.price)}</td>
+                </tr>
+            `).join('');
+
+            document.getElementById('receipt-modal').classList.remove('hidden');
+        }
+
+        // --- AUTHENTICATION SIDE-DRAWER ---
+        function openAuthDrawer(mode) {
+            toggleAuthMode(mode);
+            document.getElementById('auth-drawer').classList.remove('hidden');
+        }
+
+        function closeAuthDrawer() {
+            document.getElementById('auth-drawer').classList.add('hidden');
+        }
+
+        function toggleAuthMode(mode) {
+            const signupForm = document.getElementById('signup-form');
+            const loginForm = document.getElementById('login-form');
+            const btnSignup = document.getElementById('tab-btn-signup');
+            const btnLogin = document.getElementById('tab-btn-login');
+            const title = document.getElementById('auth-drawer-title');
+
+            if (mode === 'signup') {
+                signupForm.classList.remove('hidden');
+                loginForm.classList.add('hidden');
+                btnSignup.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-brand-500 text-black transition";
+                btnLogin.className = "flex-1 py-2 text-xs font-medium text-gray-400 hover:text-white transition";
+                title.innerText = currentLang === 'th' ? "สมัครสมาชิก" : "Sign Up Account";
+            } else {
+                signupForm.classList.add('hidden');
+                loginForm.classList.remove('hidden');
+                btnLogin.className = "flex-1 py-2 text-xs font-bold rounded-lg bg-brand-500 text-black transition";
+                btnSignup.className = "flex-1 py-2 text-xs font-medium text-gray-400 hover:text-white transition";
+                title.innerText = currentLang === 'th' ? "เข้าสู่ระบบ" : "Log In Account";
+            }
+        }
+
+        function handleSignup(e) {
+            e.preventDefault();
+            const pass = document.getElementById('su-password').value;
+            const confirmPass = document.getElementById('su-confirm-password').value;
+
+            if (pass !== confirmPass) {
+                alert("Passwords do not match!");
+                return;
+            }
+
+            const newUser = {
+                username: document.getElementById('su-username').value.trim(),
+                password: pass, // demo-only credential storage; use server-side auth for production
+                fullname: document.getElementById('su-fullname').value,
+                phone: document.getElementById('su-phone').value,
+                email: document.getElementById('su-email').value,
+                nationalId: document.getElementById('su-national-id').value,
+                address: `${document.getElementById('su-street').value}, ${document.getElementById('su-subdistrict').value}, ${document.getElementById('su-district').value}, ${document.getElementById('su-province').value} ${document.getElementById('su-postcode').value}`,
+                type: document.getElementById('su-type').value,
+                tier: document.getElementById('su-tier').value,
+                points: 300, // Signup bonus
+                claimedQuotas: [],
+                redeemedRewards: []
+            };
+
+            const duplicate = registeredUsers.some(u => u.username.toLowerCase() === newUser.username.toLowerCase() || (u.email && u.email.toLowerCase() === newUser.email.toLowerCase()));
+            if (duplicate) { alert(currentLang === 'th' ? 'ชื่อผู้ใช้หรืออีเมลนี้มีบัญชีแล้ว กรุณาเข้าสู่ระบบ' : 'That username or email is already registered. Please log in.'); return; }
+            registeredUsers.push(newUser);
+            sendToGoogleSheets('signup', sheetUserSnapshot(newUser));
+            currentUser = newUser;
+            persistEcoLoopData();
+
+            document.getElementById('signup-form').reset();
+            document.getElementById('login-form').reset();
+            updateUserUI();
+            closeAuthDrawer();
+            renderAdminData();
+
+            alert(`Welcome to EcoLoop, ${newUser.fullname}!\n\nRegistration successful. +300 Welcome Loyalty Points added to your account!`);
+        }
+
+        function handleLogin(e) {
+            e.preventDefault();
+            const userIn = document.getElementById('li-username').value.trim();
+            const passIn = document.getElementById('li-password').value;
+            const found = registeredUsers.find(u => (u.username && u.username.toLowerCase() === userIn.toLowerCase()) || (u.email && u.email.toLowerCase() === userIn.toLowerCase()));
+
+            if (found && found.password && found.password === passIn) {
+                found.redeemedRewards = found.redeemedRewards || [];
+                currentUser = found;
+                sendToGoogleSheets('login', { username: found.username, email: found.email, fullname: found.fullname });
+                document.getElementById('login-form').reset();
+                document.getElementById('signup-form').reset();
+                updateUserUI();
+                closeAuthDrawer();
+                persistEcoLoopData();
+                alert(`Welcome back, ${currentUser.fullname}!`);
+            } else {
+                alert(found ? (currentLang === 'th' ? 'รหัสผ่านไม่ถูกต้อง กรุณาลองอีกครั้ง' : 'Incorrect password. Please try again.') : (currentLang === 'th' ? 'ไม่พบบัญชีผู้ใช้ กรุณาสมัครสมาชิกก่อน' : 'User account not found. Please Sign Up first.'));
+            }
+        }
+
+        function logoutUser() {
+            if (pendingReviews.length) {
+                reviews = pendingReviews.concat(reviews);
+                pendingReviews = [];
+                try { localStorage.setItem('ecoloop-public-reviews', JSON.stringify(reviews)); } catch (_) {}
+            }
+            currentUser = null;
+            updateUserUI();
+            try { localStorage.removeItem('ecoloop-current-user'); } catch (_) {}
+            alert(currentLang === 'th' ? 'ออกจากระบบแล้ว กำลังรีเฟรชเว็บไซต์ และความคิดเห็นที่รอไว้จะแสดงบนแพลตฟอร์มหลัก' : 'Logged out successfully. The website will refresh, and your pending feedback will appear on the main platform.');
+            window.location.reload();
+        }
+
+        function updateUserUI() {
+            const greeting = document.getElementById('top-user-greeting');
+            const authBtns = document.getElementById('auth-buttons-group');
+            const userLogged = document.getElementById('user-logged-group');
+            const heroGetStarted = document.getElementById('hero-get-started-btn');
+            const adminNav = document.getElementById('nav-admin');
+            const ordersNav = document.getElementById('nav-orders');
+            const feedbackBtn = document.getElementById('leave-feedback-btn');
+
+            if (currentUser) {
+                heroGetStarted?.classList.add('hidden');
+                ordersNav?.classList.remove('hidden');
+                feedbackBtn?.classList.remove('hidden');
+                adminNav?.classList.add('hidden');
+                greeting.innerText = `Hi, ${currentUser.fullname}`;
+                authBtns?.classList.add('hidden');
+                userLogged.classList.remove('hidden');
+                userLogged.classList.add('flex');
+
+                document.getElementById('user-display-name').innerText = currentUser.fullname;
+                document.getElementById('user-display-tier').innerText = currentUser.tier;
+                document.getElementById('user-points-display').innerHTML = `${currentUser.points} <span class="text-brand-400 text-lg">PTS</span>`;
+                document.getElementById('user-tier-badge').innerText = currentUser.tier;
+            } else {
+                heroGetStarted?.classList.remove('hidden');
+                adminNav?.classList.remove('hidden');
+                ordersNav?.classList.add('hidden');
+                feedbackBtn?.classList.add('hidden');
+                greeting.innerText = "";
+                authBtns?.classList.remove('hidden');
+                userLogged.classList.add('hidden');
+                userLogged.classList.remove('flex');
+            }
+
+            renderClaimedQuotasTable();
+            updateRewardButtons();
+        }
+
+        // --- LOYALTY REWARDS ---
+        function redeemReward(cost, rewardName) {
+            if (!currentUser) {
+                alert(currentLang === 'th' ? 'กรุณาเข้าสู่ระบบเพื่อแลกรางวัล' : 'Please log in to redeem rewards.');
+                openAuthDrawer('login');
+                return;
+            }
+            currentUser.redeemedRewards = currentUser.redeemedRewards || [];
+            if (currentUser.redeemedRewards.includes(rewardName)) {
+                alert(currentLang === 'th' ? 'คุณแลกรางวัลนี้ไปแล้ว ไม่สามารถแลกซ้ำได้' : 'You have already redeemed this reward. It can only be redeemed once per account.');
+                updateRewardButtons();
+                return;
+            }
+            if (currentUser.points >= cost) {
+                currentUser.points -= cost;
+                currentUser.redeemedRewards.push(rewardName);
+                updateUserUI();
+                updateRewardButtons();
+                alert(`${currentLang === 'th' ? 'แลกรางวัลสำเร็จ' : 'Successfully redeemed'}: "${rewardName}"!\n${currentLang === 'th' ? 'เพิ่มคูปองในโปรไฟล์ของคุณแล้ว' : 'Voucher code applied to your account profile.'}`);
+            } else {
+                alert(`${currentLang === 'th' ? 'คะแนนไม่เพียงพอ ต้องการอีก' : 'Insufficient points! You need'} ${cost - currentUser.points} ${currentLang === 'th' ? 'คะแนน' : 'points'}.`);
+            }
+        }
+
+        function updateRewardButtons() {
+            const rewards = [
+                ['reward-btn-coupon', '฿25 Coupon'],
+                ['reward-btn-engraving', 'Free Engraving'],
+                ['reward-btn-co2', 'CO2 Badge'],
+                ['reward-btn-tour', 'VIP Tour Pass']
+            ];
+            rewards.forEach(([id, rewardName]) => {
+                const btn = document.getElementById(id);
+                if (!btn) return;
+                const redeemed = !!currentUser && (currentUser.redeemedRewards || []).includes(rewardName);
+                btn.disabled = redeemed;
+                btn.textContent = redeemed ? (currentLang === 'th' ? 'แลกแล้ว' : 'Redeemed') : (currentLang === 'th' ? 'แลกรางวัล' : 'Redeem');
+                btn.classList.toggle('opacity-40', redeemed);
+                btn.classList.toggle('cursor-not-allowed', redeemed);
+            });
+        }
+
+        // --- ADMIN PANEL AUTHENTICATION & MANAGEMENT ---
+        function openAdminModal() {
+            document.getElementById('admin-modal').classList.remove('hidden');
+            if (isAdminAuthenticated) {
+                document.getElementById('admin-auth-gate').classList.add('hidden');
+                document.getElementById('admin-dashboard-content').classList.remove('hidden');
+                renderAdminData();
+            } else {
+                document.getElementById('admin-auth-gate').classList.remove('hidden');
+                document.getElementById('admin-dashboard-content').classList.add('hidden');
+            }
+        }
+
+        function closeAdminModal() {
+            document.getElementById('admin-modal').classList.add('hidden');
+            // Admin authentication is deliberately session-modal-only; reopen requires fresh credentials.
+            isAdminAuthenticated = false;
+            document.getElementById('admin-auth-gate').classList.remove('hidden');
+            document.getElementById('admin-dashboard-content').classList.add('hidden');
+            document.getElementById('admin-user-input').value = '';
+            document.getElementById('admin-pass-input').value = '';
+        }
+
+        function verifyAdminAuth() {
+            const u = document.getElementById('admin-user-input').value;
+            const p = document.getElementById('admin-pass-input').value;
+
+            if ((u === 'admin' || u === 'eco_admin') && (p === 'admin123' || p === 'admin')) {
+                isAdminAuthenticated = true;
+                document.getElementById('admin-user-input').value = '';
+                document.getElementById('admin-pass-input').value = '';
+                document.getElementById('admin-auth-gate').classList.add('hidden');
+                document.getElementById('admin-dashboard-content').classList.remove('hidden');
+                renderAdminData();
+            } else {
+                alert("Invalid Admin Credentials. Default username: admin | password: admin123");
+            }
+        }
+
+        function viewAdminReceipt(orderId) {
+            const order = ordersHistory.find(o => o.orderId === orderId);
+            if (order) reopenReceipt(order);
+        }
+
+        function renderAdminData() {
+            // Stats
+            document.getElementById('admin-stat-users').innerText = registeredUsers.length;
+            document.getElementById('admin-stat-orders').innerText = ordersHistory.length;
+            
+            const totalQuotas = registeredUsers.reduce((sum, u) => sum + u.claimedQuotas.length, 0);
+            document.getElementById('admin-stat-quotas').innerText = totalQuotas;
+
+            const totalRev = ordersHistory.filter(o => o.status !== 'Cancelled').reduce((sum, o) => sum + (o.total || 0), 0);
+            document.getElementById('admin-stat-revenue').innerText = formatTHB(totalRev);
+
+            // Users Table
+            const uTbody = document.getElementById('admin-users-tbody');
+            uTbody.innerHTML = registeredUsers.map(u => `
+                <tr class="hover:bg-purple-900/10">
+                    <td class="p-3">
+                        <div class="font-bold text-white">${u.username}</div>
+                        <div class="text-[10px] text-purple-300 font-mono">${u.email}</div>
+                    </td>
+                    <td class="p-3">
+                        <div class="font-semibold text-gray-200">${u.fullname}</div>
+                        <div class="text-[10px] text-gray-400">${u.phone}</div>
+                    </td>
+                    <td class="p-3 font-mono text-purple-300">${u.nationalId}</td>
+                    <td class="p-3"><span class="bg-purple-500/20 text-purple-300 text-[10px] px-2 py-0.5 rounded border border-purple-500/30">${u.tier}</span></td>
+                    <td class="p-3 text-[10px] text-gray-400 max-w-xs truncate">${u.address}</td>
+                    <td class="p-3 font-bold text-amber-300">${u.points} PTS</td>
+                </tr>
+            `).join('');
+
+            // Orders Table
+            const oTbody = document.getElementById('admin-orders-tbody');
+            if (ordersHistory.length === 0) {
+                oTbody.innerHTML = `<tr><td colspan="7" class="p-4 text-center text-gray-500 italic">${currentLang === 'th' ? i18n.th.admin_no_orders : i18n.en.admin_no_orders}</td></tr>`;
+            } else {
+                oTbody.innerHTML = ordersHistory.map(o => `
+                    <tr class="hover:bg-purple-900/10">
+                        <td class="p-3 font-mono text-purple-300 font-bold">${o.orderId}</td>
+                        <td class="p-3 font-semibold text-white">${o.customerName}</td>
+                        <td class="p-3 text-gray-300">${o.items.map(i => i.name).join(', ')}</td>
+                        <td class="p-3 font-black text-emerald-400">${formatTHB(o.total)}</td>
+                        <td class="p-3"><div class="text-[10px] mb-1">${o.status || 'Pending'}</div><select aria-label="Update order status" onchange="updateOrderStatus('${o.orderId}', this.value)" class="mt-1 w-full max-w-[130px] bg-brand-dark border border-purple-500/30 rounded p-1 text-[10px] text-white" ${['Cancelled','Delivered'].includes(o.status) ? 'disabled' : ''}><option value="Pending" ${(o.status||'Pending')==='Pending'?'selected':''}>Pending</option><option value="Processing" ${o.status==='Processing'?'selected':''}>Processing</option><option value="Shipped" ${o.status==='Shipped'?'selected':''}>Shipped</option><option value="Delivered" ${o.status==='Delivered'?'selected':''}>Delivered</option><option value="Cancelled" ${o.status==='Cancelled'?'selected':''}>Cancelled</option></select></td>
+                        <td class="p-3 text-gray-200"><div class="font-semibold">${o.paymentMethod || '—'}</div><div class="text-[10px] text-gray-400">${o.paymentDetailsSummary || 'Demo details not supplied'}</div><div class="text-[10px] text-gray-300 mt-1">Email: ${o.email || '—'}<br>Phone: ${o.phone || '—'}<br>National ID: ${o.nationalId || '—'}<br>Address: ${o.address || '—'}</div><div class="text-[10px] text-gray-500 mt-1">${o.items.map(i => `${i.name} (${formatTHB(i.price)})`).join('<br>')}</div></td>
+                        <td class="p-3"><button onclick="viewAdminReceipt('${o.orderId}')" class="px-2 py-1 rounded bg-purple-500/20 text-purple-200 hover:bg-purple-500/40">${currentLang === 'th' ? i18n.th.admin_view_receipt : i18n.en.admin_view_receipt}</button></td>
+                    </tr>
+                `).join('');
+            }
+        }
+    </script>
+</body>
+</html>
